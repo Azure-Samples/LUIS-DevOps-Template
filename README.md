@@ -99,7 +99,7 @@ Take a note of the names you enter, as you will need them in the next step when 
 
 ### Setup the CI/CD pipeline
 
-The CI/CD pipeline requires a few setup steps to prepare it for use. You will:
+The GitHub Actions CI/CD pipeline requires a few setup steps to prepare it for use. You will:
 
 - Set environment variables in the pipeline YAML file to match the resource names you created in Azure
 - Get a token for an Azure Service Principal that you will configure and which you will store in GitHub secrets
@@ -167,7 +167,7 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
    ```
 
 1. Go to the root folder of your cloned repository. Then execute the following script to create an Azure Service Principal:   
-**IMPORTANT:** The Service Principal name you use must be unique within your Active Directory, so enter your own unique name for this service principal when prompted. Also enter the **Resource Group** name and the **Azure Key Vault** name you created when you configured the Azure resources:
+**IMPORTANT:** The Service Principal name you use must be unique within your Active Directory, so enter your own unique name for this service principal when prompted. Also enter the **Resource Group** name you created when you configured the Azure resources:
 
    If you are using `bash`:
 

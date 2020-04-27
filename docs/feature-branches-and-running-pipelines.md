@@ -33,7 +33,7 @@ You will need to install the following tools:
 
 If you followed the [setup instruction for this sample](../README.md) you will have cloned your repository from GitHub to your own machine. To set up a feature branch:
 
-1. After the GitHub repoitory is cloned, navigate to the project directory:   
+1. After the GitHub repository is cloned, navigate to the project directory:   
 `$ cd my-LUIS-DevOps-sample`
 
 1. Create a feature branch and check it out:   
