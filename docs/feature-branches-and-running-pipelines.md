@@ -13,6 +13,7 @@ In this sample, we follow the [GitHubFlow branching strategy](https://guides.git
 1. The merge to master triggers the full CI/CD pipeline which:
    * Creates a new LUIS app version from the merged source
    * Runs unit test against it
+   * If the tests fail, GitHub notifies repository members by email.
    * If tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository
    * Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version
 
@@ -35,11 +36,8 @@ If you followed the [setup instruction for this sample](../README.md) you will h
 1. After the GitHub repoitory is cloned, navigate to the project directory:   
 `$ cd my-LUIS-DevOps-sample`
 
-1. Create a feature branch:   
-`$ git branch update-luis-sample`
-
-1. Checkout the branch   
-`$ git checkout update-luis-sample`
+1. Create a feature branch and check it out:   
+`$ git checkout -B update-luis-sample`
 
 ## Make your LUIS app updates
 

@@ -78,9 +78,11 @@ After your repository is created, clone it to your own machine. You can follow t
 
 The CI/CD pipeline and the LUIS apps require some resources in Azure to be configured:
 
-- a Language Understanding Authoring resource
-- a Language Understanding Prediction resource
-- an Azure Storage account
+| Resource                                  | Description                                               |
+|-------------------------------------------|-----------------------------------------------------------|
+|Language Understanding Authoring resource  | Used by the pipeline to author LUIS apps                  |
+|Language Understanding Prediction resource | Used by the pipeline to query the LUIS app during testing |
+|Azure Storage account                      | Stores F-measure LUIS app quality testing results         |
 
 To set up these resources, click the following button:
 
@@ -100,7 +102,7 @@ Take a note of the names you enter, as you will need them in the next step when 
 The CI/CD pipeline requires a few setup steps to prepare it for use. You will:
 
 - Set environment variables in the pipeline YAML file to match the resource names you created in Azure
-- Get a token for a Service Principal that you will configure and which you will store in GitHub secrets
+- Get a token for an Azure Service Principal that you will configure and which you will store in GitHub secrets
 
 #### Set Environment Variables for Resource names in the pipeline YAML
 
@@ -109,18 +111,18 @@ The CI/CD pipeline is defined in the **luis_ci.yaml** file in the **/.github/wor
 - variables for the names of the Azure resources
 - **LUIS_MASTER_APP_NAME** environment variable defines the name of the LUIS app that is built from the source checked into the master branch, and which the pipeline will create when it first runs.
 
-Edit the **luis_ci.yaml** file and change the environment variables to match the names of the Azure resources you defined earlier. You can also enter your own name for the master LUIS app with the **LUIS_MASTER_APP_NAME** variable, if you wish. Also, set the **IS_PRIVATE_REPOSITORY** value to `true` if your repository is private. For example:
+Edit the **luis_ci.yaml** file and change the environment variables to match the names of the Azure resources you defined earlier. You can also change the name of the master LUIS app specified in the **LUIS_MASTER_APP_NAME** variable, if you wish. Also, set the **IS_PRIVATE_REPOSITORY** value to `true` if your repository is private. For example:
 
 ```yml
 env:
   # Set the Azure Resource Group name
-  AzureResourceGroup: luisDevOpsRG
+  AzureResourceGroup: YOUR_RESOURCE_GROUP_NAME
   # Set the Azure LUIS Authoring Resource name
-  AzureLuisAuthoringResourceName: LUISDevOpsResource-Authoring
+  AzureLuisAuthoringResourceName: YOUR_LUIS_AUTHORING_RESOURCE_NAME
   # Set the Azure LUIS Prediction Resource name
-  AzureLuisPredictionResourceName: LUISDevOpsResource-Prediction
+  AzureLuisPredictionResourceName: YOUR_LUIS_PREDICTION_RESOURCE_NAME
   # Set the Azure Storage Account name
-  AzureStorageAccountName: luisdevopsstorage
+  AzureStorageAccountName: yourstorageaccountname
   
   # Set the name of the master LUIS app
   LUIS_MASTER_APP_NAME: LUISDevOps-master
@@ -220,7 +222,7 @@ It is software engineering best practices to protect the master branch from dire
 You configure the specific workflows you require in your own software engineering organization. For the purposes of this sample, you will configure branch protections as follows:
 
 - **master** branch is protected from direct check-ins
-- Pull request requires **1** review approval (for simplicity - consider at least 2 reviewers on a real project)
+- Pull request requires **1** review approval (1 reviewer is suggested for this sample for simplicity, but it is considered best practice to require at least 2 reviewers on a real project)
 - Status check configured so that the automation pipeline when triggered by a Pull Request must complete successfully before the PR can be merged.
 
 To configure these protections:
