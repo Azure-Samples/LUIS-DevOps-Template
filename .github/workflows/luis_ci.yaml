@@ -1,0 +1,380 @@
+name: LUIS-CI
+
+# Trigger the workflow on push or pull request, but only for the master branch, and only for changes to lu or json files
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'luis-app/*.lu'
+      - 'luis-app/Tests/*.json'
+  pull_request:
+    paths:
+      - 'luis-app/*.lu'
+      - 'luis-app/Tests/*.json'
+
+env:
+  # Set the Azure Resource Group name
+  AzureResourceGroup: luisDevOpsRG
+  # Set the Azure LUIS Authoring Resource name
+  AzureLuisAuthoringResourceName: LUISDevOpsResource-Authoring
+  # Set the Azure LUIS Prediction Resource name
+  AzureLuisPredictionResourceName: LUISDevOpsResource-Prediction
+  # Set the Azure Storage Account name
+  AzureStorageAccountName: luisdevopsstorage
+  
+  # Set the name of the master LUIS app
+  LUIS_MASTER_APP_NAME: LUISDevOps-master
+  # If your repository is Private, set this to true
+  IS_PRIVATE_REPOSITORY: false
+
+  # Set the path to the lu file for your LUIS app
+  LU_FILE: luis-app/model.lu
+  # Set the path to the file for your unit tests
+  UNIT_TEST_FILE: luis-app/Tests/unittests.json
+  # Set the path to the file for your unit tests
+  QUALITY_TEST_FILE: luis-app/Tests/verificationtests.json
+  # Set the name of the container in the Azure Storage account that contains the baseline F-measure results
+  BASELINE_CONTAINER_NAME: ''
+
+jobs:
+  build:
+    name: Build and Test LUIS model
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Fetch all history for all tags and branches - for GitVersion
+      if: env.IS_PRIVATE_REPOSITORY == 'false'
+      run: git fetch --prune --unshallow
+    - name: Fetch all history for all tags and branches (private repo) - for GitVersion
+      if: env.IS_PRIVATE_REPOSITORY == 'true'
+      run: |
+        git config remote.origin.url https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        git fetch --prune --unshallow    
+
+    - name: GitVersion
+      uses: docker://gittools/gitversion:5.2.5-linux-ubuntu-16.04-netcoreapp2.1
+      with:
+        args: /github/workspace /nofetch /output buildserver
+        
+    - name: luisAppVersion env
+      run: echo "::set-env name=luisAppVersion::$GitVersion_SemVer" 
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        architecture: 'x64' 
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Get LUIS authoring endpoint
+      run: |
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
+          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
+          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
+
+    - name: Get LUIS prediction region
+      run: |
+          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup > predictionAccount.json
+          predictionRegion=$(node --eval "fs.readFile('predictionAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).location))")
+          echo "::set-env name=luisEndpointRegion::$predictionRegion"
+
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+
+    - name: Install botframework-cli
+      run: npm i -g @microsoft/botframework-cli
+
+    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
+    - name: Disable botframework-cli telemetry
+      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+
+    - name: Ludown to LUIS model
+      run: bf luis:convert -i $LU_FILE -o ./model.json --name 'LUIS CI pipeline - ${{ github.run_id }}' --versionid $luisAppVersion
+
+    # When doing a gate check on PRs, we build a new LUIS application for testing that is later deleted
+    - name: Create PR check LUIS application 
+      if: github.event_name == 'pull_request'
+      run: |
+        importResult=`bf luis:application:import --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }}  --in model.json`
+        echo "::set-env name=AppId::$(echo $(echo $importResult | cut -b 35-70))" 
+
+    # When doing a merge to master, use the master LUIS app - create if necessary (soft fails if exists)
+    - name: Get master LUIS application ID
+      if: github.event_name == 'push'
+      run: |
+        bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --versionId=0.1
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
+        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
+        luisAppId=$(echo $luisAppId | xargs)
+        echo "Found LUIS app: $luisAppId"
+        echo "::set-env name=AppId::$luisAppId"
+
+    # Determine the current number of versions in the app, purge oldest if count is at limit (100)
+    - name: Purge LUIS app version
+      run: |
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --out luis_versions.json
+        version_count=$(node --eval "fs.readFile('luis_versions.json','utf8',(err,data)=>console.log(JSON.parse(data).length))")
+        if [ $version_count -ge 99 ]; then
+          last_version=$(node --eval "fs.readFile('luis_versions.json','utf8',(err,data)=>console.log(JSON.parse(data)[$version_count-1].version))")
+          bf luis:version:delete --appId $AppId --endpoint $luisAuthoringEndpoint --versionId $last_version --subscriptionKey ${{ secrets.LUISAuthoringKey }}
+        fi
+      
+    # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application 
+    - name: Create new LUIS application version
+      if: github.event_name == 'push'
+      run: bf luis:version:import --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --in model.json
+
+    - name: Train luis
+      shell: bash
+      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }}
+
+    - name: Wait for train
+      run: |
+        while [ `bf luis:train:show --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --versionId $luisAppVersion | python GetTrainingStatus.py` -eq 2 ]
+        do 
+          echo 'sleep 10'
+          sleep 10
+        done 
+
+    - name: Publish luis
+      run: |
+        curl POST $POSTurl \
+        -H "Content-Type: application/json" \
+        -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
+        --data-ascii "{'versionId': '$luisAppVersion', 'directVersionPublish': true}" 
+      env:
+        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/publish
+
+    - name: Install dotnet-nlu
+      run: dotnet tool install -g dotnet-nlu
+
+    - name: Add dotnet Tools to Path
+      run: echo "::add-path::$HOME/.dotnet/tools"
+    
+    - name: Get Azure subscriptionId
+      run: |
+          az account show > account.json
+          subscriptionID=$(node --eval "fs.readFile('account.json','utf8',(err,data)=>console.log(JSON.parse(data).id))")
+          echo "::set-env name=AzureSubscriptionId::$subscriptionID"
+    
+    - name: Azure Get Access Token
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.2.0
+        inlineScript: |
+          az account get-access-token --query accessToken -o tsv  > armtoken.txt
+          
+    - name: Set arm token env
+      run: |
+        echo "::set-env name=arm_token::$(cat armtoken.txt)"      
+        echo $arm_token
+
+    - name: Assign LUIS Azure Prediction resource to application
+      run: |
+        curl POST $POSTurl \
+        -H "Authorization: Bearer $arm_token" \
+        -H "Content-Type: application/json" \
+        -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
+        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }" 
+      env:
+        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/api/v2.0/apps/${{ env.AppId }}/azureaccounts
+    
+    - name: Test Luis model
+      run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
+      env:
+        AzureLuisResourceName: ${{ env.AzureLuisPredictionResourceName }}
+        luisAppId: ${{ env.AppId }}
+        luisVersionId: ${{ env.luisAppVersion }}
+        luisDirectVersionPublish: true        
+        luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+
+    - name: Analyze Unit test results
+      run: dotnet nlu compare -e $UNIT_TEST_FILE -a results.json --unit-test --output-folder unittest
+
+    - name: Archive Unit Test Results
+      uses: actions/upload-artifact@v1
+      with:
+        name: UnitTestResult
+        path: unittest/TestResult.xml      
+
+    # Delete the LUIS app again if we are executing as gate check on a PR
+    - name: Delete luis test target app
+      if: always() && (github.event_name == 'pull_request')
+      shell: bash
+      run:  bf luis:application:delete --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --force
+
+
+  # Job: LUIS quality testing
+  LUIS_quality_testing:
+    name: LUIS F-measure testing
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Get LUIS authoring endpoint
+      run: |
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
+          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
+          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
+
+    - name: Get LUIS prediction region
+      run: |
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > predictionAccount.json
+          predictionRegion=$(node --eval "fs.readFile('predictionAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).location))")
+          echo "::set-env name=luisEndpointRegion::$predictionRegion"
+
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+
+    - name: Install @microsoft/botframework-cli
+      run: npm i -g @microsoft/botframework-cli
+
+    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
+    - name: Disable botframework-cli telemetry
+      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    
+    - name: Get master LUIS application ID
+      run: |
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
+        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
+        luisAppId=$(echo $luisAppId | xargs)
+        echo "Found LUIS app: $luisAppId"
+        echo "::set-env name=AppId::$luisAppId"
+
+    - name: Get LUIS latest version ID
+      run: |
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
+        version=$(node --eval "fs.readFile('luis_latest_version.json','utf8',(err,data)=>console.log(JSON.parse(data)[0].version))")
+        echo "::set-env name=LuisVersion::$version"
+
+    - name: Install dotnet-nlu
+      run: dotnet tool install -g dotnet-nlu
+
+    - name: Add dotnet Tools to Path
+      run: echo "::add-path::$HOME/.dotnet/tools"
+
+    - name: Test Luis model with quality verification tests
+      run: dotnet nlu test -s luisV3 -u $QUALITY_TEST_FILE -o F-results.json
+      env: 
+        AzureLuisResourceName: ${{ env.AzureLuisPredictionResourceName }} 
+        luisAppId: ${{ env.AppId }} 
+        luisVersionId: ${{ env.LuisVersion }}
+        luisDirectVersionPublish: true
+        luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+
+    - name: download baseline
+      if: env.BASELINE_CONTAINER_NAME != ''
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.2.0
+        inlineScript: |
+          az storage blob download  --account-name ${{  env.AzureStorageAccountName  }} --container-name ${{  env.BASELINE_CONTAINER_NAME  }}  --name statistics.json  --file baselinefile.json --auth-mode login
+
+    - name: Compare Luis model F-measure with baseline
+      if: env.BASELINE_CONTAINER_NAME != ''
+      run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json --baseline baselinefile.json 
+
+    # if no baseline configured, then we just compare against the expected results to create statistics that can become the new baseline
+    - name: Analyze Luis model F-measure - Create baseline
+      if: env.BASELINE_CONTAINER_NAME == ''
+      run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json 
+
+    - name: Archive Quality Test Results
+      if: env.BASELINE_CONTAINER_NAME != ''
+      uses: actions/upload-artifact@v1
+      with:
+        name: QualityTestResult
+        path: TestResult.xml            		
+
+    - name: upload statistics
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.2.0
+        inlineScript: |
+          az storage container create  --account-name ${{ env.AzureStorageAccountName }}  --name ${{ github.sha }}  --auth-mode login
+          az storage blob upload  --account-name ${{ env.AzureStorageAccountName }}  --container-name ${{ github.sha }} --name statistics.json --file statistics.json  --auth-mode login
+
+  # Job: Publishes the latest version details, from which the endpoint can be derived
+  release:
+    name: Create LUIS Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+      
+    - name: Install @microsoft/botframework-cli
+      run: npm i -g @microsoft/botframework-cli
+
+    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
+    - name: Disable botframework-cli telemetry
+      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+
+    - name: Get LUIS authoring endpoint
+      run: |
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
+          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
+          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
+
+    - name: Get master LUIS application ID
+      run: |
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
+        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
+        luisAppId=$(echo $luisAppId | xargs)
+        echo "Found LUIS app: $luisAppId"
+        echo "::set-env name=AppId::$luisAppId"
+
+    - name: Get LUIS latest version ID
+      run: |
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
+        version=$(node --eval "fs.readFile('luis_latest_version.json','utf8',(err,data)=>console.log(JSON.parse(data)[0].version))")
+        echo "::set-env name=LuisVersion::$version"
+      
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ env.LuisVersion }}
+        release_name: Release ${{ env.LuisVersion }}
+        body: |
+          Releasing new LUIS endpoint
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+        asset_path: ./luis_latest_version.json
+        asset_name: luis_latest_version.json
+        asset_content_type: application/json

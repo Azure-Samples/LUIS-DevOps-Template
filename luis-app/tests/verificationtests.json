@@ -1,0 +1,227 @@
+[
+  {
+    "text": "hello, would like to solicit a paid time off vacation between 18th of july and 25 of july. now that business season is over i need to recharge my battteries.",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "leave-type",
+        "startPos": 31,
+        "endPos": 43
+      },
+      {
+        "entity": "vacation-request",
+        "startPos": 31,
+        "endPos": 88
+      },
+      {
+        "entity": "date-range",
+        "startPos": 54,
+        "endPos": 88
+      }
+    ]
+  },
+  {
+    "text": "hi , am soliciting a vacations from 02/15/2020 to 03/25/2020 , i need rest a little , thanks",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "vacation-request",
+        "startPos": 21,
+        "endPos": 59
+      },
+      {
+        "entity": "date-range",
+        "startPos": 31,
+        "endPos": 59
+      }
+    ]
+  },
+  {
+    "text": "need a vacation form june 10th to june 30th, because i am sick and i need to be examined in the hospital.",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "vacation-request",
+        "startPos": 7,
+        "endPos": 61
+      },
+      {
+        "entity": "date-range",
+        "startPos": 21,
+        "endPos": 42
+      },
+      {
+        "entity": "leave-type",
+        "startPos": 58,
+        "endPos": 61
+      }
+    ]
+  },
+  {
+    "text": "i need an unpaid vacation from january 10th to january 25th for family reason.",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "leave-type",
+        "startPos": 10,
+        "endPos": 15
+      },
+      {
+        "entity": "vacation-request",
+        "startPos": 10,
+        "endPos": 58
+      },
+      {
+        "entity": "date-range",
+        "startPos": 26,
+        "endPos": 58
+      }
+    ]
+  },
+  {
+    "text": "i need to request a paid time off for travel starting from 02/20/2020 and it will last 8 days",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "leave-type",
+        "startPos": 20,
+        "endPos": 32
+      },
+      {
+        "entity": "vacation-request",
+        "startPos": 20,
+        "endPos": 92
+      },
+      {
+        "entity": "start-date",
+        "startPos": 45,
+        "endPos": 68
+      },
+      {
+        "entity": "days-number",
+        "startPos": 87,
+        "endPos": 87
+      },
+      {
+        "entity": "days-duration",
+        "startPos": 87,
+        "endPos": 92
+      }
+    ]
+  },
+  {
+    "text": "i want a pleasure trip for december 12th for 15 days please for my free time",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "vacation-request",
+        "startPos": 9,
+        "endPos": 51
+      },
+      {
+        "entity": "start-date",
+        "startPos": 27,
+        "endPos": 39
+      },
+      {
+        "entity": "days-number",
+        "startPos": 45,
+        "endPos": 46
+      },
+      {
+        "entity": "days-duration",
+        "startPos": 45,
+        "endPos": 51
+      }
+    ]
+  },
+  {
+    "text": "i want paid time off from july 23 to august 13, cause i need to rest",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "leave-type",
+        "startPos": 7,
+        "endPos": 19
+      },
+      {
+        "entity": "vacation-request",
+        "startPos": 7,
+        "endPos": 45
+      },
+      {
+        "entity": "date-range",
+        "startPos": 21,
+        "endPos": 45
+      }
+    ]
+  },
+  {
+    "text": "i want to request a vacation on may 5th for 10 days, because i have a trip prepared to have time with my family.",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "vacation-request",
+        "startPos": 20,
+        "endPos": 50
+      },
+      {
+        "entity": "start-date",
+        "startPos": 32,
+        "endPos": 38
+      },
+      {
+        "entity": "days-number",
+        "startPos": 44,
+        "endPos": 45
+      },
+      {
+        "entity": "days-duration",
+        "startPos": 44,
+        "endPos": 50
+      }
+    ]
+  },
+  {
+    "text": "i want to take vacations the day 02/14 to the 03/5",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "vacation-request",
+        "startPos": 10,
+        "endPos": 49
+      },
+      {
+        "entity": "date-range",
+        "startPos": 33,
+        "endPos": 49
+      }
+    ]
+  },
+  {
+    "text": "please make plans for my paid time off vacations starting on january 3 and finishing on january 13, i'm traveling to france",
+    "intent": "RequestVacation",
+    "entities": [
+      {
+        "entity": "leave-type",
+        "startPos": 25,
+        "endPos": 37
+      },
+      {
+        "entity": "vacation-request",
+        "startPos": 25,
+        "endPos": 97
+      },
+      {
+        "entity": "start-date",
+        "startPos": 61,
+        "endPos": 69
+      },
+      {
+        "entity": "end-date",
+        "startPos": 85,
+        "endPos": 97
+      }
+    ]
+  }
+]
