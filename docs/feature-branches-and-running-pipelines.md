@@ -195,11 +195,12 @@ If you click on **luis_latest_version.json** you can download it and open it in 
 The URI format for the endpoint is as follows:
 
 <code>
-https://<i>{AzureRegion}</i>.api.cognitive.microsoft.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/versions/<i>{VersionId}</i>/predict?verbose=true&timezoneOffset=0&subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
+https://<i>{Subdomain}</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/versions/<i>{VersionId}</i>/predict?verbose=true&timezoneOffset=0&subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
 </code>
 
 In this:
-* **AzureRegion** - Use the region where you created all the LUIS resources, one of *westus*, *westeurope* or *australiaeast*
+
+* **Subdomain** - Use the prediction resource name. For example, the endpoint URL for a prediction resource called *luisdevops-prediction* will be *https://luisdevops-prediction.cognitiveservices.azure.com*.
 * **AppId** - the LUIS application ID. Get this by signing into the LUIS portal, finding your LUIS app for the master branch and goto the **Manage** tab
 * **VersionId** - the version ID of the new version in the GitHub release.
 * **LUISSubscriptionKey** - the LUIS Prediction resource key. Get this from the Manage tab for your master LUIS app in the LUIS portal, and then go to Azure Resources. Copy the **Primary Key** shown for the Prediction Resource.
