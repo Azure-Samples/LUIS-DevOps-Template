@@ -4,18 +4,15 @@ This document explains how to create a feature branch in your GitHub repository,
 
 In this sample, we follow the [GitHubFlow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. When using this strategy:
 
-1. The master branch is always deployable
-1. The developer creates a feature branch to work on changes
-1. Developer does the feature/work in the feature branch
-1. When done, the developer does a Push of their changes and raises a pull request from their feature branch to master
-1. The continuous integration pipeline is triggered by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it
-1. If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master
-1. The merge to master triggers the full CI/CD pipeline which:
-   * Creates a new LUIS app version from the merged source
-   * Runs unit test against it
-   * If the tests fail, GitHub notifies repository members by email.
-   * If tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository
-   * Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version
+|  Feature | Comments |
+|------------------------------------------------- | ------------------------- |
+| The master branch is always deployable |   Dev team works to this goal. |
+| The developer creates a feature branch to work on changes | Dev works in a branch and direct updates of master is prevented by branch protection policies. |
+| Developer does the feature/work in the feature branch | Dev works in a branch to isolate their changes from the rest of the team.|
+| When done, the developer does a Push of their changes and raises a pull request from their feature branch to master | |
+| The continuous integration pipeline is triggered by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it | Pipeline runs automatically, triggered by the raising of the PR. |
+| If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master | |
+| The merge to master triggers the full CI/CD pipeline which: <ul><li> Creates a new LUIS app version from the merged source</li><li> Runs unit test against it</li><li> If the tests fail, GitHub notifies repository members by email</li><li> If tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository</li><li> Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version</li></ul> | Pipeline runs automatically, triggered by merge to **master**. |
 
 ![GitFlow](images/GitFlow.png?raw=true "GitFlow")
 
