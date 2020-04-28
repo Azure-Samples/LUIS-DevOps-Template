@@ -1,0 +1,33 @@
+{
+    "cSpell.words": [
+        "australiaeast",
+        "azuredeploy",
+        "azureluiskey",
+        "cicdpipelinecompleted",
+        "compareandpullrequest",
+        "dataset",
+        "devops",
+        "docx",
+        "importaslu",
+        "luisdevops",
+        "markdownlint",
+        "mergingblocked",
+        "nlucompare",
+        "noneintent",
+        "prstatuschecks",
+        "rbac",
+        "releasedetails",
+        "repos",
+        "unittests",
+        "verificationtests",
+        "westeurope",
+        "yourstorageaccountname"
+    ],
+    "markdownlint.config": {
+
+
+    "MD033": {
+        "allowed_elements": ["code", "ul", "li", "i"]
+    }
+    }
+}

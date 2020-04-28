@@ -22,13 +22,13 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
 
-Sample demonstrating how to develop a LUIS application while following engineering practices that adhere to software engineering fundamentals around source control, testing, CI/CD and release management.
+This sample demonstrates how to develop a LUIS application while following engineering practices that adhere to software engineering fundamentals around source control, testing, CI/CD and release management.
 
-This sample shows how to get GitHub Actions working with a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](luis-app/model.lu). The project creates a language understanding model to handle requests for vacation from employees. You can [adapt this example](docs/customizing-own-project.md) to use with your own project.
+This sample shows how to use GitHub Actions pipelines with an example LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](luis-app/model.lu). The example LUIS project defines a language understanding model to handle requests for vacation from employees. This sample repository provides a working project structure and pipelines and includes [instructions on how to customize this repository](docs/customizing-own-project.md) to use with your own project.
+
+You can find out more about LUIS in the [Language Understanding (LUIS) documentation](https://docs.microsoft.com/azure/cognitive-services/luis/).
 
 ## Contents
-
-Outline the file contents of the repository. It helps users navigate the codebase, build configuration and any related assets.
 
 | File/folder        | Description                                |
 |--------------------|--------------------------------------------|
@@ -51,19 +51,29 @@ Outline the file contents of the repository. It helps users navigate the codebas
   - [LUIS authoring account](https://www.luis.ai/home)
   - [LUIS authoring account (Europe)](https://eu.luis.ai/home)
   - [LUIS authoring account (Australia)](https://au.luis.ai/home)
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 ## Setup
 
-You'll use a GitHub repository and GitHub Actions for running the multi-stage pipeline with build, LUIS quality testing, and release stages.
+In order to setup this sample for your own use, you will:
+
+- [Get the code](#get-the-code) - Create your own GitHub repository from this template
+- [Clone the repository](#clone-your-repository) to your own machine
+- [Provision Azure resources](#provisioning-azure-resources)
+- [Setup the CI/CD pipeline](#setup-the-ci/cd-pipeline)
+  - [Set environment variables in the pipeline yaml](#set-environment-variables-for-resource-names-in-the-pipeline-yaml))
+  - [Create the Azure Service Principal](#create-the-azure-service-principal)
+  - [Store LUIS Keys in GitHub Secrets](#store-luis-keys-in-github-secrets)
+- [Protect the master branch](#protecting-the-master-branch)
 
 ### Get the code
 
-You'll use a GitHub repository and GitHub Actions for running the multi-stage pipeline with build, LUIS quality testing, and release stages. If you don't already have a GitHub account, create one by following the instructions at [Join GitHub: Create your account](https://github.com/join).
+You'll use a GitHub repository and GitHub Actions for running the multi-stage pipeline with build, LUIS quality testing, and release stages.
 
-Next you must create a new repository to hold the code and the GitHub Actions pipelines. To create your repository:
+To create your repository:
 
-- Click the green **Use this template** button near the top of the [LUISDevOpsSample](https://github.com/andycw/LUISDevOpsSample) home page for this GitHub repo, or click [this link](https://github.com/andycw/LUISDevOpsSample/generate). This will copy this repository to your own GitHub repository and squashes the history.
+- If you don't already have a GitHub account, create one by following the instructions at [Join GitHub: Create your account](https://github.com/join).
+- Click the green **Use this template** button near the top of the [LUIS-DevOps-Samples](https://github.com/Azure-Samples/LUIS-DevOps-Samples) home page for this GitHub repo. This will copy this repository to a GitHub repository of your own that it will create.
    ![Use this template](docs/images/template_button.png?raw=true "Cloning the template repo")
   - Enter your own repository name where prompted.
   - Leave **Include all branches** unchecked as you only need the master branch of the source repo copied.
@@ -72,7 +82,9 @@ Next you must create a new repository to hold the code and the GitHub Actions pi
 
 ### Clone your repository
 
-After your repository is created, clone it to your own machine. You can follow these steps to [clone your repository](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) to your own machine.
+After your repository is created, clone it to your own machine.
+
+- Follow these steps to [clone your repository](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) to your own machine.
 
 ### Provisioning Azure resources
 
@@ -88,14 +100,12 @@ To set up these resources, click the following button:
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAndyCW%2FLUISDevOpsSample%2Fmaster%2Fazuredeploy.json)
 
-When you click the button, it takes you to a web page in the Azure Portal where you can enter the names of the resources. Enter your own values on this page, bearing in mind that your names must be unique across Azure:
+When you click the button, it takes you to a web page in the Azure Portal where you can enter the names of the resources. Take a note of the names you enter, as you will need them in the next step when we configure the CI/CD pipeline.:
 
 - **Resource Group**
-- **LUIS Authoring resource name**
-- **LUIS Prediction resource name**
-- **Storage account name**
-
-Take a note of the names you enter, as you will need them in the next step when we configure the CI/CD pipeline.
+- **LUIS Authoring resource name** - must be unique across Azure
+- **LUIS Prediction resource name** - must be unique across Azure
+- **Storage account name** - 8-24 characters, lowercase letters and numbers, and must be unique across Azure
 
 ### Setup the CI/CD pipeline
 
@@ -142,9 +152,9 @@ When you have made your edits, save them, commit the changes and push the change
 
 You need to configure an Azure Service Principal to allow the pipeline to login using your identity and to work with Azure resources on your behalf. You will save the access token for the service principal in the GitHub Secrets for your repository.
 
-1. Install the Azure CLI on your machine, if not already installed. Follow these steps to [install the Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) on your system.
+1. Install the Azure CLI on your machine, if not already installed. Follow these steps to [install the Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) on your system.
 
-1. Open a terminal window and log into Azure:
+1. Open a terminal window in the root folder of your cloned repository. and log into Azure:
 
     ```bash
     az login
@@ -152,31 +162,27 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
 
    If the CLI can open your default browser, it will do so and load an Azure sign-in page. Sign in with your account credentials in the browser.
 
-   Otherwise, open a browser page at https://aka.ms/devicelogin and enter the authorization code displayed in your terminal.
+   Otherwise, open a browser page at <https://aka.ms/devicelogin> and enter the authorization code displayed in your terminal.
 
-1. Execute the following command to confirm the selected azure subscription:
+1. Show the selected azure subscription. If you have more than one subscription and do not have the correct subscription selected, select the right subscription with `az account set`:
 
    ```bash
    az account show
-   ```
-
-1. If you have more than one subscription and do not have the correct subscription selected, select the right subscription with:
-
-   ```bash
    az account set -s {Name or ID of subscription}
    ```
 
-1. Go to the root folder of your cloned repository. Then execute the following script to create an Azure Service Principal:   
-**IMPORTANT:** The Service Principal name you use must be unique within your Active Directory, so enter your own unique name for this service principal when prompted. Also enter the **Resource Group** name you created when you configured the Azure resources:
+1. Execute the following script to create an Azure Service Principal:
+
+   > **IMPORTANT:** The Service Principal name you use must be unique within your Active Directory, so enter your own unique name for this service principal when prompted. Also enter the **Resource Group** name you created when you configured the Azure resources:
 
    If you are using `bash`:
 
    ```bash
    ./setup/create_sp.sh
    ```
-    
+
    If you are using `Powershell`:
-    
+
    ```powershell
    ./setup/create_sp.ps1
    ```
@@ -185,29 +191,24 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
 
 1. As prompted, copy the JSON that is returned, then in your repository, create a **GitHub secret** named **AZURE_CREDENTIALS** and paste the JSON in as the value.
 
-   You access GitHub Secrets by clicking on the **Settings** tab on the home page of your repository, or by going to https://github.com/*your-GitHub-Id*/*your-repository*/settings. Then click on **Secrets** in the **Options** menu, which brings up the UI for entering Secrets, like this:
+   You access GitHub Secrets by clicking on the **Settings** tab on the home page of your repository, or by going to `https://github.com/{your-GitHub-Id}/{your-repository}/settings`. Then click on **Secrets** in the **Options** menu, which brings up the UI for entering Secrets, like this:
 
    ![GitHub Secrets](docs/images/gitHubSecretsAzure.png?raw=true "Saving in GitHub Secrets")
 
 #### Store LUIS Keys in GitHub Secrets
 
-You must also save the LUIS Authoring and Prediction resource keys in GitHub Secrets so that the pipeline can use them. You can get the keys for these resources from the Azure Portal.
+You must also save the LUIS Authoring and Prediction resource keys in GitHub Secrets so that the pipeline can use them. 
 
-![LUIS resource keys in Azure Portal](docs/images/azureLUISkey.png?raw=true "Getting the LUIS resource keys")
-
-Alternatively, you can retrieve them using the Azure CLI, using the Azure Resource Group name and the LUIS Prediction resource names you entered when you configured the resources in Azure:
+You can get the keys using the Azure CLI, specifying the Azure Resource Group name and the LUIS Prediction resource names you entered when you configured the resources in Azure:
 
 <code>
-az cognitiveservices account keys list --name *LUISAuthoringResourceName* --resource-group *ResourceGroup*
+az cognitiveservices account keys list --name <i>{LUISAuthoringResourceName}</i> --resource-group <i>{ResourceGroup}</i>
 </code>
 
-Repeat this for both your **LUIS Authoring** and **Prediction** resources.
+Repeat this for both your **LUIS Authoring** and **Prediction** resources, and save these keys in **GitHub Secrets** in your repository, using the following key names:
 
-Save these keys in **GitHub Secrets** in your repository, using the following key names:
-
-
-| Key                      |         value            |
-|--------------------------|--------------------------|
+| Key                      |         value                     |
+|--------------------------|-----------------------------------|
 | **LUISAuthoringKey**     |  The LUIS Authoring resource key  |
 | **LUISPredictionKey**    |  The LUIS Prediction resource key |  
 
@@ -228,7 +229,7 @@ You configure the specific workflows you require in your own software engineerin
 To configure these protections:
 
 1. In the home page for your repository on **GitHub.com**, click on **Settings**
-1. On the Settings page, click on **Branches*** in the Options menu
+1. On the Settings page, click on **Branches** in the Options menu
 
    ![Branch protection settings](docs/images/branch_protection_settings.png?raw=true "Accessing branch protection settings")
 1. Under **Branch protection rules**, click the **Add rule** button
@@ -236,7 +237,7 @@ To configure these protections:
    1. In the **Branch name pattern** box, enter **master**
    1. Check **Require pull request reviews before merging**
    1. Check **Require status checks to pass before merging**
-   1. It is **not** recommended for the purposes of this sample to also check **Include administrators** as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
+   1. It is **not** recommended for the purposes of learning how to use this sample to also check **Include administrators**, as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
 
    ![Branch protection add rule](docs/images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
    1. Click the **Create** button at the bottom of the page
@@ -261,7 +262,7 @@ See the following documents for more information on this sample and the engineer
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+the rights to use your contribution. For details, visit <https://cla.opensource.microsoft.com.>
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions

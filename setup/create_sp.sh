@@ -1,6 +1,6 @@
 #!/bin/bash
 # Get the Service Principal name
-SP_DEFAULT="myLUISDevOpsApp"
+SP_DEFAULT="myLUISDevOpsApp-$RANDOM"
 read -p "Enter the Service Principal name [$SP_DEFAULT]: " spname
 spname="${spname:-$SP_DEFAULT}"
 
