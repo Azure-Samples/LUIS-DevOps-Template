@@ -22,9 +22,7 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
 
-This repository demonstrates how to develop a LUIS application while following engineering practices that adhere to software engineering fundamentals around source control, testing, CI/CD and release management.
-
-This template repository demonstrates how to use GitHub Actions pipelines with an example LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](luis-app/model.lu). Follow the [setup instructions](1-project-setup.md) to clone this template repository to your own GitHub account and to configure it for use. This template repository provides a working project structure and GitHub Actions pipelines and includes [instructions on how to customize this repository](docs/3-customizing-own-project.md) for use with your own project.
+Use this repository to develop a LUIS application while following DevOps engineering practices that adhere to software engineering fundamentals around source control, testing, CI/CD and release management. This template repository provides a working project structure and GitHub Actions pipelines that you can customize for use with your own project.
 
 You can find out more about LUIS in the [Language Understanding (LUIS) documentation](https://docs.microsoft.com/azure/cognitive-services/luis/).
 
@@ -55,13 +53,11 @@ You can find out more about LUIS in the [Language Understanding (LUIS) documenta
 
 ## How to use this template repository
 
-Work through the LUIS DevOps workflow to set up the environment, make updates to a LUIS app in a feature branch, to raise a pull request to merge changes back to the master branch, and to execute CI/CD pipelines to protect quality. The project you create can be used as a starting point to develop your own LUIS model.
+Follow these steps to run this workflow in your personal GitHub repository:
 
-***Required:*** Follow the steps to run this workflow in your personal GitHub repository:
-
-1. [Project Setup](./docs/1-project-setup.md)
-2. [Making updates to a LUIS app in a feature branch](./docs/2-feature-branches-and-running-pipelines.md)
-3. [Customizing the repository for your own project](./docs/3-customizing-own-project.md)
+1. Follow the [Project setup instructions](1-project-setup.md) to clone this template repository to your own GitHub account and to configure it for use.
+2. Follow the [Making updates to a LUIS app in a feature branch](./docs/2-feature-branches-and-running-pipelines.md) tutorial to understand the "dev inner loop" workflow for making updates to the LUIS app while using DevOps practices.
+3. This template repository uses a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](../luis-app/model.lu). To use this repository with your own project, follow these instructions: [Customizing the repository for your own project](./docs/3-customizing-own-project.md).
 
 ## Contributing
 
