@@ -1,0 +1,139 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "LUISResourcesRegion": {
+            "defaultValue": "westus",
+            "allowedValues": [
+                "westus",
+                "westeurope",
+                "australiaeast"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "The Azure region for the LUIS resources. Use the region appropriate to your preferred Authoring Portal."
+                }
+        },
+        "LUISAuthoringResourceName": {
+            "defaultValue": "LUISDevOpsResource-Authoring",
+            "type": "String",
+            "metadata": {
+                "description": "The name for the LUIS Authoring resource."
+                }
+        },
+        "LUISPredictionResourceName": {
+            "defaultValue": "LUISDevOpsResource-Prediction",
+            "type": "String",
+            "metadata": {
+                "description": "The name for the LUIS Prediction resource."
+                }
+        },
+        "StorageAccountName": {
+            "defaultValue": "luisdevopsstorage",
+            "type": "String",
+            "metadata": {
+                "description": "The name for the storage account."
+                }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2017-04-18",
+            "name": "[parameters('LUISPredictionResourceName')]",
+            "location": "[parameters('LUISResourcesRegion')]",
+            "sku": {
+                "name": "S0"
+            },
+            "kind": "LUIS",
+            "properties": {
+                "customSubDomainName": "[parameters('LUISPredictionResourceName')]"
+            }
+        },
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2017-04-18",
+            "name": "[parameters('LUISAuthoringResourceName')]",
+            "location": "[parameters('LUISResourcesRegion')]",
+            "sku": {
+                "name": "F0"
+            },
+            "kind": "LUIS.Authoring",
+            "properties": {
+                "customSubDomainName": "[parameters('LUISAuthoringResourceName')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[parameters('StorageAccountName')]",
+            "location": "[parameters('LUISResourcesRegion')]",
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('StorageAccountName'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName'))]"
+            ],
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('StorageAccountName'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName'))]"
+            ],
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        }
+    ]
+}

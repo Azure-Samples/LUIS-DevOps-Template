@@ -1,0 +1,58 @@
+{
+    "cSpell.words": [
+        "Apim",
+        "armtoken",
+        "australiaeast",
+        "azcliversion",
+        "azureaccounts",
+        "azuredeploy",
+        "azureluiskey",
+        "baselinefile",
+        "botcli",
+        "botframework",
+        "buildserver",
+        "cicd",
+        "cicdpipelinecompleted",
+        "compareandpullrequest",
+        "creds",
+        "dataset",
+        "devops",
+        "docx",
+        "eval",
+        "exportlu",
+        "gittools",
+        "gitversion",
+        "importaslu",
+        "ludown",
+        "luisdevops",
+        "luisdevopsresultsstorage",
+        "luismasterapp",
+        "markdownlint",
+        "mergingblocked",
+        "mkdir",
+        "netcoreapp",
+        "nlucompare",
+        "nofetch",
+        "noneintent",
+        "pos",
+        "prstatuschecks",
+        "rbac",
+        "releasedetails",
+        "repos",
+        "turl",
+        "unittests",
+        "unshallow",
+        "verificationtests",
+        "versionid",
+        "westeurope",
+        "xargs",
+        "yourstorageaccountname"
+    ],
+    "markdownlint.config": {
+
+
+    "MD033": {
+        "allowed_elements": ["code", "ul", "li", "i"]
+    }
+    }
+}
