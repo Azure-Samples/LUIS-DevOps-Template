@@ -213,22 +213,10 @@ Then we go ahead and create a new version in the LUIS app by importing the JSON 
   ```yml
     - name: Train luis
       shell: bash
-      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }}
+      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --wait
   ```
 
-It takes some time to train the model, so we need to wait for this process to finish before we will be able to publish this model. The [python script](../.github/workflows/GetTrainingStatus) checks for status from the `bf luis:train:show` botframework-cli command:
-
-  ```yml
-    - name: Wait for train
-      run: |
-        while [ `bf luis:train:show --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --versionId $luisAppVersion | python GetTrainingStatus.py` -eq 2 ]
-        do
-          echo 'sleep 10'
-          sleep 10
-        done
-  ```
-
-After we waited for model to finish training we can publish our LUIS model. We use *direct version publishing* for this rather than publishing to the named slots, staging and production. We do this to be able to support more than two published versions at any one time so that multiple LUIS app versions can be in a published state at any one time to support more then two dev environments simultaneously (for example, DEV, QA, UAT, PRODUCTION. We use a cURL command here to call the REST API directly:
+After the model has finished training we can publish our LUIS model. We use *direct version publishing* for this rather than publishing to the named slots, staging and production. We do this to be able to support more than two published versions at any one time so that multiple LUIS app versions can be in a published state at any one time to support more then two dev environments simultaneously (for example, DEV, QA, UAT, PRODUCTION. We use a cURL command here to call the REST API directly:
 
   ```yml
     - name: Publish luis

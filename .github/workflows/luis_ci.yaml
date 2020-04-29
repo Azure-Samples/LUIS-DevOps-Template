@@ -62,11 +62,6 @@ jobs:
     - name: luisAppVersion env
       run: echo "::set-env name=luisAppVersion::$GitVersion_SemVer" 
 
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
-        architecture: 'x64' 
-
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -124,15 +119,7 @@ jobs:
 
     - name: Train luis
       shell: bash
-      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }}
-
-    - name: Wait for train
-      run: |
-        while [ `bf luis:train:show --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --versionId $luisAppVersion | python GetTrainingStatus.py` -eq 2 ]
-        do 
-          echo 'sleep 10'
-          sleep 10
-        done 
+      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --wait
 
     - name: Publish luis
       run: |
