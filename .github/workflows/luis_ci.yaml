@@ -73,15 +73,8 @@ jobs:
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
-          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
-          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
-
-    - name: Get LUIS prediction region
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup > predictionAccount.json
-          predictionRegion=$(node --eval "fs.readFile('predictionAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).location))")
-          echo "::set-env name=luisEndpointRegion::$predictionRegion"
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "endpoint" | \
+          xargs -I {} echo "::set-env name=luisAuthoringEndpoint::{}"
 
     - uses: actions/setup-node@v1
       with:
@@ -109,20 +102,19 @@ jobs:
       if: github.event_name == 'push'
       run: |
         bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --versionId=0.1
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
-        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
-        luisAppId=$(echo $luisAppId | xargs)
-        echo "Found LUIS app: $luisAppId"
-        echo "::set-env name=AppId::$luisAppId"
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+        xargs -I {} echo "::set-env name=AppId::{}"
+        echo "Found LUIS app: $AppId"
 
-    # Determine the current number of versions in the app, purge oldest if count is at limit (100)
-    - name: Purge LUIS app version
+    # Determine the current number of versions in the app, naive policy can purge oldest if count is at limit (100)
+    # Current implementation prints error message and fails pipeline.
+    - name: Check LUIS app version count
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --out luis_versions.json
-        version_count=$(node --eval "fs.readFile('luis_versions.json','utf8',(err,data)=>console.log(JSON.parse(data).length))")
-        if [ $version_count -ge 99 ]; then
-          last_version=$(node --eval "fs.readFile('luis_versions.json','utf8',(err,data)=>console.log(JSON.parse(data)[$version_count-1].version))")
-          bf luis:version:delete --appId $AppId --endpoint $luisAuthoringEndpoint --versionId $last_version --subscriptionKey ${{ secrets.LUISAuthoringKey }}
+        version_count=$(bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} | jq 'length')
+        if [ $version_count -ge 100 ]; then
+          echo "ERROR: LUIS app: $AppId version count will exceed 100. Delete unneeded versions before re-running pipeline"
+          exit 1
         fi
       
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application 
@@ -156,24 +148,16 @@ jobs:
 
     - name: Add dotnet Tools to Path
       run: echo "::add-path::$HOME/.dotnet/tools"
-    
+
     - name: Get Azure subscriptionId
       run: |
-          az account show > account.json
-          subscriptionID=$(node --eval "fs.readFile('account.json','utf8',(err,data)=>console.log(JSON.parse(data).id))")
-          echo "::set-env name=AzureSubscriptionId::$subscriptionID"
+          az account show --query 'id' | \
+          xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
     
     - name: Azure Get Access Token
-      uses: azure/CLI@v1
-      with:
-        azcliversion: 2.2.0
-        inlineScript: |
-          az account get-access-token --query accessToken -o tsv  > armtoken.txt
-          
-    - name: Set arm token env
       run: |
-        echo "::set-env name=arm_token::$(cat armtoken.txt)"      
-        echo $arm_token
+          az account get-access-token --query accessToken -o tsv  | \
+          xargs -I {} echo "::set-env name=arm_token::{}"
 
     - name: Assign LUIS Azure Prediction resource to application
       run: |
@@ -181,14 +165,18 @@ jobs:
         -H "Authorization: Bearer $arm_token" \
         -H "Content-Type: application/json" \
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
-        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }" 
+        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
       env:
-        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/api/v2.0/apps/${{ env.AppId }}/azureaccounts
-    
+        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
+        
+    - name: Get LUIS prediction region (for NLU.DevOps Test)
+      run: |
+          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
+          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
+
     - name: Test Luis model
       run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
       env:
-        AzureLuisResourceName: ${{ env.AzureLuisPredictionResourceName }}
         luisAppId: ${{ env.AppId }}
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true        
@@ -228,15 +216,8 @@ jobs:
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
-          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
-          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
-
-    - name: Get LUIS prediction region
-      run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > predictionAccount.json
-          predictionRegion=$(node --eval "fs.readFile('predictionAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).location))")
-          echo "::set-env name=luisEndpointRegion::$predictionRegion"
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "endpoint" | \
+          xargs -I {} echo "::set-env name=luisAuthoringEndpoint::{}"
 
     - uses: actions/setup-node@v1
       with:
@@ -251,23 +232,27 @@ jobs:
     
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
-        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
-        luisAppId=$(echo $luisAppId | xargs)
-        echo "Found LUIS app: $luisAppId"
-        echo "::set-env name=AppId::$luisAppId"
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+        xargs -I {} echo "::set-env name=AppId::{}"
+        echo "Found LUIS app: $AppId"
 
     - name: Get LUIS latest version ID
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
-        version=$(node --eval "fs.readFile('luis_latest_version.json','utf8',(err,data)=>console.log(JSON.parse(data)[0].version))")
-        echo "::set-env name=LuisVersion::$version"
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 | \
+        jq '.[0].version' | \
+        xargs -I {} echo "::set-env name=LuisVersion::{}"
 
     - name: Install dotnet-nlu
       run: dotnet tool install -g dotnet-nlu
 
     - name: Add dotnet Tools to Path
       run: echo "::add-path::$HOME/.dotnet/tools"
+    
+    - name: Get LUIS prediction region (for NLU.DevOps Test)
+      run: |
+          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
+          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
 
     - name: Test Luis model with quality verification tests
       run: dotnet nlu test -s luisV3 -u $QUALITY_TEST_FILE -o F-results.json
@@ -300,7 +285,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: QualityTestResult
-        path: TestResult.xml   		
+        path: TestResult.xml
 
     - name: upload statistics
       uses: azure/CLI@v1
@@ -337,23 +322,21 @@ jobs:
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
-          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
-          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "endpoint" | \
+          xargs -I {} echo "::set-env name=luisAuthoringEndpoint::{}"
 
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
-        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
-        luisAppId=$(echo $luisAppId | xargs)
-        echo "Found LUIS app: $luisAppId"
-        echo "::set-env name=AppId::$luisAppId"
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+        xargs -I {} echo "::set-env name=AppId::{}"
+        echo "Found LUIS app: $AppId"
 
     - name: Get LUIS latest version ID
       run: |
         bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
-        version=$(node --eval "fs.readFile('luis_latest_version.json','utf8',(err,data)=>console.log(JSON.parse(data)[0].version))")
-        echo "::set-env name=LuisVersion::$version"
+        cat luis_latest_version.json | jq '.[0].version' | \
+        xargs -I {} echo "::set-env name=LuisVersion::{}"
       
     - name: Create Release
       id: create_release

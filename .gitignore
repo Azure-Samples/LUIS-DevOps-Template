@@ -23,9 +23,7 @@ luis-app/appsettings.local.json
 
 # LUIS app transient files
 luis-app/model.json
-luis-app/results.json
-luis-app/metadata.json
-luis-app/statistics.json
-luis-app/tests/results.json
-luis-app/tests/metadata.json
-luis-app/tests/statistics.json
+**/results.json
+**/metadata.json
+**/statistics.json
+**/TestResult.xml

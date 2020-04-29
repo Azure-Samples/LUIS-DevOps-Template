@@ -1,8 +1,8 @@
-# Customizing the Sample Repository for your own project
+# 3. Customizing the repository for your own project
 
 This sample uses a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](../luis-app/model.lu). The sample project creates a language understanding model to handle requests for vacation from employees.
 
-If you have built the sample and have the pipeline working, it is very simple to adapt it to support your own project.
+If you have built the sample project and have the pipeline working, it is very simple to adapt it to support your own project.
 
 ## Starting a new project from scratch
 
@@ -33,6 +33,6 @@ If you have built the sample and have the pipeline working, it is very simple to
 
 1. Replace the contents of the **luis-app/tests/verificationtests.json** file with your own verification tests.
 
-1. Follow the steps described in [Setup the CI/CD pipeline](../README.md#setup-the-ci/cd-pipeline) to ensure that the CI/CD pipeline is configured correctly for your project.
+1. Follow the steps described in [Setup the CI/CD pipeline](1-project-setup.md#setup-the-cicd-pipeline) to ensure that the CI/CD pipeline is configured correctly for your project.
 
 1. Check in your changes and raise a PR to merge them into the master branch.

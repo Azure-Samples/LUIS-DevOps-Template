@@ -49,14 +49,14 @@ You must ensure that the environment variables values match the names of the Azu
 ```yml
 env:
   # Set the Azure Resource Group name
-  AzureResourceGroup: luisDevOpsRG
+  AzureResourceGroup: YOUR_RESOURCE_GROUP_NAME
   # Set the Azure LUIS Authoring Resource name
-  AzureLuisAuthoringResourceName: LUISDevOpsResource-Authoring
+  AzureLuisAuthoringResourceName: YOUR_LUIS_AUTHORING_RESOURCE_NAME
   # Set the Azure LUIS Prediction Resource name
-  AzureLuisPredictionResourceName: LUISDevOpsResource-Prediction
+  AzureLuisPredictionResourceName: YOUR_LUIS_PREDICTION_RESOURCE_NAME
   # Set the Azure Storage Account name
-  AzureStorageAccountName: luisdevopsresultsstorage
-
+  AzureStorageAccountName: yourstorageaccountname
+  
   # Set the name of the master LUIS app
   LUIS_MASTER_APP_NAME: LUISDevOps-master
   # If your repository is Private, set this to true
@@ -116,36 +116,17 @@ It starts by checking out the code and then fetching all the history and tags fo
 
 #### Log into Azure
 
-We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for various relevant information needed later on:
+We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring endpoint needed later on:
 
 ```yml
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Get Azure subscriptionId
-      run: |
-          az account show > account.json
-          subscriptionID=$(node -pe 'JSON.parse(process.argv[1]).id' "$(cat account.json)")
-          echo "::set-env name=AzureSubscriptionId::$subscriptionID"
-
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > authoringAccount.json
-          authoringEndpoint=$(node --eval "fs.readFile('authoringAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).endpoint))")
-          echo "::set-env name=luisAuthoringEndpoint::$authoringEndpoint"
-
-    - name: Get LUIS prediction region
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup > predictionAccount.json
-          predictionRegion=$(node --eval "fs.readFile('predictionAccount.json','utf8',(err,data)=>console.log(JSON.parse(data).location))")
-          echo "::set-env name=luisEndpointRegion::$predictionRegion"
-
-    - name: Get LUIS prediction region
-      run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup > predictionAccount.json
-          predictionRegion=$(node -pe 'JSON.parse(process.argv[1]).location' "$(cat predictionAccount.json)")
-          echo "::set-env name=luisEndpointRegion::$predictionRegion"
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "endpoint" | \
+          xargs -I {} echo "::set-env name=luisAuthoringEndpoint::{}"
 ```
 
 #### Install Bot Framework CLI
@@ -200,25 +181,27 @@ If operating as a Merge pipeline, the LUIS app is the one associated with the ma
       if: github.event_name == 'push'
       run: |
         bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --versionId=0.1
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
-        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
-        luisAppId=$(echo $luisAppId | xargs)
-        echo "Found LUIS app: $luisAppId"
-        echo "::set-env name=AppId::$luisAppId"
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+        xargs -I {} echo "::set-env name=AppId::{}"
+        echo "Found LUIS app: $AppId"
   ```
 
-Next, we check if the LUIS app currently has 100 versions (the limit), and if so delete the oldest. Then we go ahead and create a new version in the LUIS app by importing the JSON created earlier. (This step will only do something when the LUIS app is the one targeted by the Merge pipeline):
+Next, we check if the LUIS app currently has 100 versions (the limit), and if so print a warning and fail the pipeline. In order to resolve this, unneeded versions must be deleted from the LUIS master app.
 
   ```yml
     - name: Purge LUIS app version
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --out luis_versions.json
-        version_count=$(node --eval "fs.readFile('luis_versions.json','utf8',(err,data)=>console.log(JSON.parse(data).length))")
-        if [ $version_count -ge 99 ]; then
-          last_version=$(node --eval "fs.readFile('luis_versions.json','utf8',(err,data)=>console.log(JSON.parse(data)[$version_count-1].version))")
-          bf luis:version:delete --appId $AppId --endpoint $luisAuthoringEndpoint --versionId $last_version --subscriptionKey ${{ secrets.LUISAuthoringKey }}
+        version_count=$(bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} | jq 'length')
+        if [ $version_count -ge 100 ]; then
+          echo "ERROR: LUIS app: $AppId version count will exceed 100. Delete unneeded versions before re-running pipeline"
+          exit 1
         fi
+  ```
 
+Then we go ahead and create a new version in the LUIS app by importing the JSON created earlier. (This step will only do something when the LUIS app is the one targeted by the Merge pipeline):
+
+  ```yml
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application
     - name: Create new LUIS application version
       if: github.event_name == 'push'
@@ -279,21 +262,13 @@ In order to test a LUIS app, you must use a Azure LUIS Prediction resource key s
   ```yml
     - name: Get Azure subscriptionId
       run: |
-          az account show > account.json
-          subscriptionID=$(node --eval "fs.readFile('account.json','utf8',(err,data)=>console.log(JSON.parse(data).id))")
-          echo "::set-env name=AzureSubscriptionId::$subscriptionID"
+          az account show --query 'id' | \
+          xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
 
-    - name: Azure CLI script
-        uses: azure/CLI@v1
-        with:
-          azcliversion: 2.0.72
-          inlineScript: |
-            az account get-access-token --query accessToken -o tsv  > armtoken.txt
-
-      - name: set arm token env
-        run: |
-          echo "::set-env name=ARM_TOKEN::$(cat armtoken.txt)"
-          echo $ARM_TOKEN  
+    - name: Azure Get Access Token
+      run: |
+          az account get-access-token --query accessToken -o tsv  | \
+          xargs -I {} echo "::set-env name=arm_token::{}"
   ```
 
 We assign the Azure LUIS prediction resource to the application. Note that here we access the REST API using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources:
@@ -307,7 +282,17 @@ We assign the Azure LUIS prediction resource to the application. Note that here 
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
       env:
-        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/api/v2.0/apps/${{ env.AppId }}/azureaccounts
+        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
+
+  ```
+
+The NLU.DevOps test tool needs to have the prediction region set in an environment variable:
+
+  ```yml
+      - name: Get LUIS prediction region (for NLU.DevOps Test)
+      run: |
+          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
+          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
   ```
 
 To test the LUIS app version that was created, we use the unit test file:
@@ -316,7 +301,6 @@ To test the LUIS app version that was created, we use the unit test file:
     - name: Test Luis model
       run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
       env:
-        AzureLuisResourceName: ${{ env.AzureLuisPredictionResourceName }}
         luisAppId: ${{ env.AppId }}
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true
@@ -386,17 +370,16 @@ The pipeline step executes in its own build environment, so early in this step w
   ```yml
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
-        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
-        luisAppId=$(echo $luisAppId | xargs)
-        echo "Found LUIS app: $luisAppId"
-        echo "::set-env name=AppId::$luisAppId"
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+        xargs -I {} echo "::set-env name=AppId::{}"
+        echo "Found LUIS app: $AppId"
 
     - name: Get LUIS latest version ID
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
-        version=$(node --eval "fs.readFile('luis_latest_version.json','utf8',(err,data)=>console.log(JSON.parse(data)[0].version))")
-        echo "::set-env name=LuisVersion::$version"
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 | \
+        jq '.[0].version' | \
+        xargs -I {} echo "::set-env name=LuisVersion::{}"
   ```
 
 #### Executing F measure testing
@@ -486,17 +469,16 @@ These steps determine the version Id of the model built by the **build** step:
   ```yml
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --out appList.json
-        luisAppId=`cat appList.json |  jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id'`
-        luisAppId=$(echo $luisAppId | xargs)
-        echo "Found LUIS app: $luisAppId"
-        echo "::set-env name=AppId::$luisAppId"
+        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+        xargs -I {} echo "::set-env name=AppId::{}"
+        echo "Found LUIS app: $AppId"
 
     - name: Get LUIS latest version ID
       run: |
         bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
-        version=$(node --eval "fs.readFile('luis_latest_version.json','utf8',(err,data)=>console.log(JSON.parse(data)[0].version))")
-        echo "::set-env name=LuisVersion::$version"
+        cat luis_latest_version.json | jq '.[0].version' | \
+        xargs -I {} echo "::set-env name=LuisVersion::{}"
   ```
 
 Then it creates a GitHub Release, which also tags the repo using the version Id:
@@ -536,5 +518,5 @@ A *Release Manager* can determine the version Id of the LUIS app by examining th
 From this, the endpoint URL can be determined, as follows:
 
 <code>
-https://<i>subDomain</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>appId</i>/versions/<i>versionId</i>/predict?verbose=true&subscription-key=<i>predictionKey</i>&query=<i>query</i>
+https://<i>azureLUISPredictionResourceName</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>appId</i>/versions/<i>versionId</i>/predict?verbose=true&subscription-key=<i>predictionKey</i>&query=<i>query</i>
 </code>.

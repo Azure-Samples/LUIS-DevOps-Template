@@ -1,22 +1,22 @@
-# Making updates to a LUIS app in a feature branch
+# 2. Making updates to a LUIS app in a feature branch
 
-This document explains how to create a feature branch in your GitHub repository, how to make updates to your LUIS app and to save the updated LUDown encoded representation of your app, and how to raise a pull request (PR) to merge the updates back into the master branch.
+This document explains how to create a feature branch in your GitHub repository, how to make updates to your LUIS app and to save changes in source control, how to raise a pull request (PR) to merge the updates back into the master branch and how to execute continuous integration pipelines.
 
-In this sample, we follow the [GitHubFlow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. When using this strategy:
+In this example, we follow the [GitHubFlow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. When using this strategy, in outline:
 
-|  Feature | Comments |
-|------------------------------------------------- | ------------------------- |
-| The master branch is always deployable |   Dev team works to this goal. |
-| The developer creates a feature branch to work on changes | Dev works in a branch and direct updates of master is prevented by branch protection policies. |
-| Developer does the feature/work in the feature branch | Dev works in a branch to isolate their changes from the rest of the team.|
-| When done, the developer does a Push of their changes and raises a pull request from their feature branch to master | |
-| The continuous integration pipeline is triggered by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it | Pipeline runs automatically, triggered by the raising of the PR. |
-| If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master | |
-| The merge to master triggers the full CI/CD pipeline which: <ul><li> Creates a new LUIS app version from the merged source</li><li> Runs unit test against it</li><li> If the tests fail, GitHub notifies repository members by email</li><li> If tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository</li><li> Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version</li></ul> | Pipeline runs automatically, triggered by merge to **master**. |
+* Developer creates a feature branch and does the feature/work in that branch.
+* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master.
+* The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it.
+* If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
+* The merge to master automatically triggers the full CI/CD pipeline which:
+  * Creates a new LUIS app version in the master LUIS app from the merged source.
+  * Runs unit test against it. If the tests fail, GitHub fails the pipeline and notifies repository members by email.
+  * If unit tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository.
+  * Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version.
 
 ![GitFlow](images/GitFlow.png?raw=true "GitFlow")
 
-The rest of this document explains how to run through these steps with the sample. Note that all steps involving `git` operations are shown using the **Git Bash shell**. Developers may have their own preference for using GUI tools or tooling built into developer tools such as Visual Studio Code to achieve the same result.
+This document explains how to run through these steps. Note that all steps involving `git` operations are shown using the **Git Bash shell**. Developers may have their own preference for using GUI tools or tooling built into developer tools such as Visual Studio Code to achieve the same result.
 
 You will be performing the following steps to make updates to the LUIS app:
 
@@ -49,7 +49,7 @@ If you followed the [setup instruction for this sample](../README.md) you will h
 
 ## Make your LUIS app updates
 
-Now that you are working inside the feature branch, you can make your updates to the LUIS app, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://github.com/microsoft/botbuilder-tools/tree/master/packages/Ludown#ludown) to define the LUIS app version since it can be maintained in a source control system and enables the reviewing process because of its legibility.
+Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://github.com/microsoft/botbuilder-tools/tree/master/packages/Ludown#ludown) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
 
 In this sample, the LUDown for a sample application and the test files are provided:
 
@@ -205,7 +205,7 @@ You can go to the LUIS Portal to the **My apps** page, select your Azure subscri
 
 ### Executing predictions against the LUIS app version endpoint
 
-The URI format for the endpoint is as follows:
+You can test out the new LUIS app version by sending a prediction request fro the browser. The URI format for the app version endpoint is as follows:
 
 <code>
 https://<i>{Subdomain}</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/versions/<i>{VersionId}</i>/predict?verbose=true&timezoneOffset=0&subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
