@@ -245,7 +245,7 @@ On the ubuntu agent, you need to append the tools directory to the system PATH v
       run: echo "::add-path::$HOME/.dotnet/tools"
   ```
 
-In order to test a LUIS app, you must use a Azure LUIS Prediction resource key since the Authoring key is not practicable since it is subject to throttling causing the tests to fail. In order to ensure that the Azure LUIS Prediction resource is assigned to the target LUIS app, we must get an ARM token from Azure that will be used later on for assigning the Azure LUIS resource to the test target app:
+In order to test a LUIS app, you must use a Azure LUIS Prediction resource key since the Authoring key is not practicable since it is subject to throttling causing the tests to fail. Here we assign the Azure LUIS prediction resource to the application. Note that here we access the REST API using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources:
 
   ```yml
     - name: Get Azure subscriptionId
@@ -253,19 +253,10 @@ In order to test a LUIS app, you must use a Azure LUIS Prediction resource key s
           az account show --query 'id' | \
           xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
 
-    - name: Azure Get Access Token
-      run: |
-          az account get-access-token --query accessToken -o tsv  | \
-          xargs -I {} echo "::set-env name=arm_token::{}"
-  ```
-
-We assign the Azure LUIS prediction resource to the application. Note that here we access the REST API using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources:
-
-  ```yml
     - name: Assign LUIS Azure Prediction resource to application
       run: |
         curl POST $POSTurl \
-        -H "Authorization: Bearer $arm_token" \
+        -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
         -H "Content-Type: application/json" \
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
