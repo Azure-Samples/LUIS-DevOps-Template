@@ -140,16 +140,11 @@ jobs:
       run: |
           az account show --query 'id' | \
           xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
-    
-    - name: Azure Get Access Token
-      run: |
-          az account get-access-token --query accessToken -o tsv  | \
-          xargs -I {} echo "::set-env name=arm_token::{}"
 
     - name: Assign LUIS Azure Prediction resource to application
       run: |
         curl POST $POSTurl \
-        -H "Authorization: Bearer $arm_token" \
+        -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
         -H "Content-Type: application/json" \
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
