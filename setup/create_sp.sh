@@ -5,9 +5,7 @@ read -p "Enter the Service Principal name [$SP_DEFAULT]: " spname
 spname="${spname:-$SP_DEFAULT}"
 
 # Get the resource group name
-RG_DEFAULT="luisDevOpsRG"
-read -p "Enter the Azure Resource Group name [$RG_DEFAULT]: " resourceGroup
-resourceGroup="${resourceGroup:-$RG_DEFAULT}"
+read -p "Enter the Azure Resource Group name: " resourceGroup
 
 # get our subscriptionId
 subscriptionId=$(az account show --query id -o tsv)

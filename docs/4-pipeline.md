@@ -138,9 +138,8 @@ Next we install node.js (necessary for running the Bot Framework CLI) and the BF
       with:
         node-version: '12.x'
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
 
     - name: Install @microsoft/botframework-cli
       run: |
@@ -265,15 +264,6 @@ In order to test a LUIS app, you must use a Azure LUIS Prediction resource key s
 
   ```
 
-The NLU.DevOps test tool needs to have the prediction region set in an environment variable:
-
-  ```yml
-      - name: Get LUIS prediction region (for NLU.DevOps Test)
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
-          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
-  ```
-
 To test the LUIS app version that was created, we use the unit test file:
 
   ```yml
@@ -284,6 +274,7 @@ To test the LUIS app version that was created, we use the unit test file:
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
 To evaluate results we use two files: the *unit test file* that consists of test utterances and the expected intents and entities results and `results.json` file which was created by the Test LUIS model step and contains the actual results returned from testing the LUIS model:
@@ -374,6 +365,7 @@ Testing uses the verification test file rather than the unit test file:
         luisVersionId: ${{ env.LuisVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
 #### Compare F measure results with baseline

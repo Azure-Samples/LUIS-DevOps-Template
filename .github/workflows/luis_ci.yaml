@@ -78,9 +78,8 @@ jobs:
     - name: Install botframework-cli
       run: npm i -g @microsoft/botframework-cli
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
 
     - name: Ludown to LUIS model
       run: bf luis:convert -i $LU_FILE -o ./model.json --name 'LUIS CI pipeline - ${{ github.run_id }}' --versionid $luisAppVersion
@@ -150,11 +149,6 @@ jobs:
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
       env:
         POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
-        
-    - name: Get LUIS prediction region (for NLU.DevOps Test)
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
-          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
 
     - name: Test Luis model
       run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
@@ -163,6 +157,7 @@ jobs:
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true        
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
 
     - name: Analyze Unit test results
       run: dotnet nlu compare -e $UNIT_TEST_FILE -a results.json --unit-test --output-folder unittest
@@ -208,10 +203,9 @@ jobs:
     - name: Install @microsoft/botframework-cli
       run: npm i -g @microsoft/botframework-cli
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
-    
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
+
     - name: Get master LUIS application ID
       run: |
         bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
@@ -230,11 +224,6 @@ jobs:
 
     - name: Add dotnet Tools to Path
       run: echo "::add-path::$HOME/.dotnet/tools"
-    
-    - name: Get LUIS prediction region (for NLU.DevOps Test)
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
-          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
 
     - name: Test Luis model with quality verification tests
       run: dotnet nlu test -s luisV3 -u $QUALITY_TEST_FILE -o F-results.json
@@ -244,6 +233,7 @@ jobs:
         luisVersionId: ${{ env.LuisVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
 
     - name: download baseline
       if: env.BASELINE_CONTAINER_NAME != ''
@@ -298,9 +288,8 @@ jobs:
     - name: Install @microsoft/botframework-cli
       run: npm i -g @microsoft/botframework-cli
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
 
     - name: Get LUIS authoring endpoint
       run: |
