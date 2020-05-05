@@ -55,7 +55,7 @@ You can find out more about LUIS in the [Language Understanding (LUIS) documenta
 
 Follow these steps to run this workflow in your personal GitHub repository:
 
-1. Follow the [Project setup instructions](1-project-setup.md) to clone this template repository to your own GitHub account and to configure it for use.
+1. Follow the [Project setup instructions](./docs/1-project-setup.md) to clone this template repository to your own GitHub account and to configure it for use.
 2. Follow the [Making updates to a LUIS app in a feature branch](./docs/2-feature-branches-and-running-pipelines.md) tutorial to understand the "dev inner loop" workflow for making updates to the LUIS app while using DevOps practices.
 3. This template repository uses a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](../luis-app/model.lu). To use this repository with your own project, follow these instructions: [Customizing the repository for your own project](./docs/3-customizing-own-project.md).
 
