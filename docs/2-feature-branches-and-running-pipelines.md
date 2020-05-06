@@ -97,7 +97,7 @@ However, it is good development practice for the developer to run all the unit t
 
 ### Setting up for testing
 
-You need to enter settings for the test target LUIS app - the app you have just created - in an **appSettings.local.json** file. In the **luis-app** folder, a sample **appSettings.sample.json** has been provided. Copy this file to **appSettings.local.json** in the same folder and then enter the required values:
+You need to enter settings for the test target LUIS app - the app you have just created - in an **appsettings.local.json** file. In the **luis-app** folder, a sample **appsettings.sample.json** has been provided. Rename this file to **appsettings.local.json** and then enter the required values:
 
 ```json
 {
