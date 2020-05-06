@@ -150,7 +150,7 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
 
 You must also save the LUIS Authoring and Prediction resource keys in GitHub Secrets so that the pipeline can use them.
 
-You can get the keys using the Azure CLI, specifying the Azure Resource Group name and the LUIS resource names you entered when you configured them in Azure.  If multiple keys are returned for any resource, you can any one of them.
+You can get the keys using the Azure CLI, specifying the Azure Resource Group name and the LUIS resource names you entered when you configured them in Azure.  If multiple keys are returned for any resource, you can use any one of them.
 
 **LUIS Authoring**
 
