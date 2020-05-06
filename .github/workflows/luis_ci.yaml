@@ -7,11 +7,11 @@ on:
       - master
     paths:
       - 'luis-app/*.lu'
-      - 'luis-app/Tests/*.json'
+      - 'luis-app/tests/*.json'
   pull_request:
     paths:
       - 'luis-app/*.lu'
-      - 'luis-app/Tests/*.json'
+      - 'luis-app/tests/*.json'
 
 env:
   # Set the Azure Resource Group name
@@ -31,9 +31,9 @@ env:
   # Set the path to the lu file for your LUIS app
   LU_FILE: luis-app/model.lu
   # Set the path to the file for your unit tests
-  UNIT_TEST_FILE: luis-app/Tests/unittests.json
+  UNIT_TEST_FILE: luis-app/tests/unittests.json
   # Set the path to the file for your unit tests
-  QUALITY_TEST_FILE: luis-app/Tests/verificationtests.json
+  QUALITY_TEST_FILE: luis-app/tests/verificationtests.json
   # Set the name of the container in the Azure Storage account that contains the baseline F-measure results
   BASELINE_CONTAINER_NAME: ''
 
@@ -78,9 +78,8 @@ jobs:
     - name: Install botframework-cli
       run: npm i -g @microsoft/botframework-cli
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
 
     - name: Ludown to LUIS model
       run: bf luis:convert -i $LU_FILE -o ./model.json --name 'LUIS CI pipeline - ${{ github.run_id }}' --versionid $luisAppVersion
@@ -140,26 +139,16 @@ jobs:
       run: |
           az account show --query 'id' | \
           xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
-    
-    - name: Azure Get Access Token
-      run: |
-          az account get-access-token --query accessToken -o tsv  | \
-          xargs -I {} echo "::set-env name=arm_token::{}"
 
     - name: Assign LUIS Azure Prediction resource to application
       run: |
         curl POST $POSTurl \
-        -H "Authorization: Bearer $arm_token" \
+        -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
         -H "Content-Type: application/json" \
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
       env:
         POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
-        
-    - name: Get LUIS prediction region (for NLU.DevOps Test)
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
-          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
 
     - name: Test Luis model
       run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
@@ -168,6 +157,7 @@ jobs:
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true        
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
 
     - name: Analyze Unit test results
       run: dotnet nlu compare -e $UNIT_TEST_FILE -a results.json --unit-test --output-folder unittest
@@ -213,10 +203,9 @@ jobs:
     - name: Install @microsoft/botframework-cli
       run: npm i -g @microsoft/botframework-cli
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
-    
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
+
     - name: Get master LUIS application ID
       run: |
         bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
@@ -235,11 +224,6 @@ jobs:
 
     - name: Add dotnet Tools to Path
       run: echo "::add-path::$HOME/.dotnet/tools"
-    
-    - name: Get LUIS prediction region (for NLU.DevOps Test)
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
-          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
 
     - name: Test Luis model with quality verification tests
       run: dotnet nlu test -s luisV3 -u $QUALITY_TEST_FILE -o F-results.json
@@ -249,6 +233,7 @@ jobs:
         luisVersionId: ${{ env.LuisVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
 
     - name: download baseline
       if: env.BASELINE_CONTAINER_NAME != ''
@@ -303,9 +288,8 @@ jobs:
     - name: Install @microsoft/botframework-cli
       run: npm i -g @microsoft/botframework-cli
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
 
     - name: Get LUIS authoring endpoint
       run: |

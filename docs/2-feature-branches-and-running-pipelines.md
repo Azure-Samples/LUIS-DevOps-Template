@@ -49,7 +49,7 @@ If you followed the [setup instruction for this sample](../README.md) you will h
 
 ## Make your LUIS app updates
 
-Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://github.com/microsoft/botbuilder-tools/tree/master/packages/Ludown#ludown) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
+Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://github.com/microsoft/botframework-cli/blob/master/packages/luis/docs/lu-file-format.md) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
 
 In this sample, the LUDown for a sample application and the test files are provided:
 
@@ -190,6 +190,8 @@ If you click on the **Actions** tab immediately after you merge your pull reques
 ![CI/CD pipeline completed](images/cicdpipelinecompleted.png?raw=true "CI/CD pipeline completed")
 
 ### Verifying the new LUIS master app version
+
+> **Note:** This solution uses [GitVersion](https://gitversion.net/docs/why) to increment the version number on every build. It looks at your git history on every commit to calculate what the version currently is, and calculates the new version number automatically using semantic versioning. You can instruct GitVersion to manually increment the major, minor or patch version using commit messages, or by setting the next-version property in the GitVersion.yml file in the root of your repository. Read more about [GitVersion Version Incrementing](https://gitversion.net/docs/more-info/version-increments) in the GitVersion documentation.
 
 After the pipeline has completed successfully, if you look on the home page of your repository, you can see that a new release has been created:
 

@@ -4,9 +4,7 @@ $spname = Read-Host "Enter the Service Principal name [$($SP_DEFAULT)]: "
 $spname = ($SP_DEFAULT,$spname)[[bool]$spname]
 
 # Get the resource group name
-$RG_DEFAULT="luisDevOpsRG"
-$resourceGroup = Read-Host "Enter the Azure Resource Group name [$($RG_DEFAULT)]: "
-$resourceGroup = ($RG_DEFAULT,$resourceGroup)[[bool]$resourceGroup]
+$resourceGroup = Read-Host "Enter the Azure Resource Group name: "
 
 # get our subscriptionId
 $subscriptionId=$(az account show --query id -o tsv)

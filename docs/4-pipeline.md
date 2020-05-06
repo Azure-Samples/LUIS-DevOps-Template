@@ -138,9 +138,8 @@ Next we install node.js (necessary for running the Bot Framework CLI) and the BF
       with:
         node-version: '12.x'
 
-    # Telemetry prompt botcli  bug - https://github.com/microsoft/botframework-cli/issues/370
-    - name: Disable botframework-cli telemetry
-      run: 'mkdir -p ~/.config/@microsoft/botframework-cli; echo "{ \"telemetry\": false }" > $_/config.json'
+    - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
+      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
 
     - name: Install @microsoft/botframework-cli
       run: |
@@ -245,7 +244,7 @@ On the ubuntu agent, you need to append the tools directory to the system PATH v
       run: echo "::add-path::$HOME/.dotnet/tools"
   ```
 
-In order to test a LUIS app, you must use a Azure LUIS Prediction resource key since the Authoring key is not practicable since it is subject to throttling causing the tests to fail. In order to ensure that the Azure LUIS Prediction resource is assigned to the target LUIS app, we must get an ARM token from Azure that will be used later on for assigning the Azure LUIS resource to the test target app:
+In order to test a LUIS app, you must use a Azure LUIS Prediction resource key since the Authoring key is not practicable since it is subject to throttling causing the tests to fail. Here we assign the Azure LUIS prediction resource to the application. Note that here we access the REST API using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources:
 
   ```yml
     - name: Get Azure subscriptionId
@@ -253,34 +252,16 @@ In order to test a LUIS app, you must use a Azure LUIS Prediction resource key s
           az account show --query 'id' | \
           xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
 
-    - name: Azure Get Access Token
-      run: |
-          az account get-access-token --query accessToken -o tsv  | \
-          xargs -I {} echo "::set-env name=arm_token::{}"
-  ```
-
-We assign the Azure LUIS prediction resource to the application. Note that here we access the REST API using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources:
-
-  ```yml
     - name: Assign LUIS Azure Prediction resource to application
       run: |
         curl POST $POSTurl \
-        -H "Authorization: Bearer $arm_token" \
+        -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
         -H "Content-Type: application/json" \
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
       env:
         POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
 
-  ```
-
-The NLU.DevOps test tool needs to have the prediction region set in an environment variable:
-
-  ```yml
-      - name: Get LUIS prediction region (for NLU.DevOps Test)
-      run: |
-          az cognitiveservices account show --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "location" | \
-          xargs -I {} echo "::set-env name=luisEndpointRegion::{}"
   ```
 
 To test the LUIS app version that was created, we use the unit test file:
@@ -293,6 +274,7 @@ To test the LUIS app version that was created, we use the unit test file:
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
 To evaluate results we use two files: the *unit test file* that consists of test utterances and the expected intents and entities results and `results.json` file which was created by the Test LUIS model step and contains the actual results returned from testing the LUIS model:
@@ -383,6 +365,7 @@ Testing uses the verification test file rather than the unit test file:
         luisVersionId: ${{ env.LuisVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
 #### Compare F measure results with baseline
