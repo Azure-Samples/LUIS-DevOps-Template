@@ -7,11 +7,11 @@ on:
       - master
     paths:
       - 'luis-app/*.lu'
-      - 'luis-app/Tests/*.json'
+      - 'luis-app/tests/*.json'
   pull_request:
     paths:
       - 'luis-app/*.lu'
-      - 'luis-app/Tests/*.json'
+      - 'luis-app/tests/*.json'
 
 env:
   # Set the Azure Resource Group name
@@ -31,9 +31,9 @@ env:
   # Set the path to the lu file for your LUIS app
   LU_FILE: luis-app/model.lu
   # Set the path to the file for your unit tests
-  UNIT_TEST_FILE: luis-app/Tests/unittests.json
+  UNIT_TEST_FILE: luis-app/tests/unittests.json
   # Set the path to the file for your unit tests
-  QUALITY_TEST_FILE: luis-app/Tests/verificationtests.json
+  QUALITY_TEST_FILE: luis-app/tests/verificationtests.json
   # Set the name of the container in the Azure Storage account that contains the baseline F-measure results
   BASELINE_CONTAINER_NAME: ''
 
