@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "text": "i want paid time off from july 23 to august 13",
     "intent": "RequestVacation",
@@ -142,6 +142,7 @@
               "values": [
                 {
                   "timex": "XXXX-05-05"
+                }
               ]
             }
           ],
