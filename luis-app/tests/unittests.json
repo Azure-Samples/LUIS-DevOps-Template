@@ -1,6 +1,6 @@
 ﻿[
   {
-    "text": "i want paid time off from july 23 to august 13",
+    "text": "i want paid time off from july 23 2020 to august 13",
     "intent": "RequestVacation",
     "entities": [
       {
@@ -16,12 +16,7 @@
               "type": "daterange",
               "values": [
                 {
-                  "timex": "(XXXX-07-23,XXXX-08-13,P21D)",
-                  "start": "2019-07-23",
-                  "end": "2019-08-13"
-                },
-                {
-                  "timex": "(XXXX-07-23,XXXX-08-13,P21D)",
+                  "timex": "(2020-07-23,2020-08-13,P21D)",
                   "start": "2020-07-23",
                   "end": "2020-08-13"
                 }
@@ -29,7 +24,7 @@
             }
           ]
         },
-        "matchText": "paid time off from july 23 to august 13"
+        "matchText": "paid time off from july 23 2020 to august 13"
       }
     ],
     "intents": [
@@ -110,31 +105,22 @@
     ]
   },
   {
-    "text": "please make the dates of my vacations from march 3 to march 10",
+    "text": "please make the dates of my vacations from march 3 2021 to march 10",
     "intent": "RequestVacation",
     "entities": [
       {
-        "entityType": "vacation-request",
+        "entityType": "date-range",
         "entityValue": {
-          "date-range": [
+          "type": "daterange",
+          "values": [
             {
-              "type": "daterange",
-              "values": [
-                {
-                  "timex": "(XXXX-03-03,XXXX-03-10,P7D)",
-                  "start": "2020-03-03",
-                  "end": "2020-03-10"
-                },
-                {
-                  "timex": "(XXXX-03-03,XXXX-03-10,P7D)",
-                  "start": "2021-03-03",
-                  "end": "2021-03-10"
-                }
-              ]
+              "timex": "(2021-03-03,2021-03-10,P7D)",
+              "start": "2021-03-03",
+              "end": "2021-03-10"
             }
           ]
         },
-        "matchText": "vacations from march 3 to march 10"
+        "matchText": "from march 3 2021 to march 10"
       }
     ],
     "intents": [
@@ -144,7 +130,7 @@
     ]
   },
   {
-    "text": "I want to request a vacation on may 5th for 10 days to have time with my family",
+    "text": "I want to request a vacation starting may 5th 2021 and lasting 10 days to have time with my family",
     "intent": "RequestVacation",
     "entities": [
       {
@@ -152,15 +138,13 @@
         "entityValue": {
           "start-date": [
             {
-              "type": "date",
+              "type": "daterange",
               "values": [
                 {
-                  "timex": "XXXX-05-05",
-                  "value": "2019-05-05"
-                },
-                {
-                  "timex": "XXXX-05-05",
-                  "value": "2020-05-05"
+                  "timex": "2021-05-05",
+                  "Mod": "after",
+                  "sourceEntity": "datetimepoint",
+                  "start": "2021-05-05"
                 }
               ]
             }
@@ -173,7 +157,7 @@
             }
           ]
         },
-        "matchText": "vacation on may 5th for 10 days"
+        "matchText": "vacation starting may 5th 2021 and lasting 10 days"
       }
     ],
     "intents": [
