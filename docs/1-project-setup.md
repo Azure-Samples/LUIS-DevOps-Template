@@ -193,7 +193,7 @@ To configure these protections:
 1. In the home page for your repository on **GitHub.com**, click on **Settings**
 1. On the Settings page, click on **Branches** in the Options menu
 
-   ![Branch protection settings](/images/branch_protection_settings.png?raw=true "Accessing branch protection settings")
+   ![Branch protection settings](./images/branch_protection_settings.png?raw=true "Accessing branch protection settings")
 1. Under **Branch protection rules**, click the **Add rule** button
 1. Configure the rule:
    1. In the **Branch name pattern** box, enter **master**
