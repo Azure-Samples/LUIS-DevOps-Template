@@ -25,7 +25,7 @@ To create your repository:
 
 - If you don't already have a GitHub account, create one by following the instructions at [Join GitHub: Create your account](https://github.com/join).
 - Click the green **Use this template** button near the top of the [LUIS-DevOps-Samples](https://github.com/Azure-Samples/LUIS-DevOps-Samples) home page for this GitHub repo. This will copy this repository to a GitHub repository of your own that it will create.
-   ![Use this template](/images/template_button.png?raw=true "Cloning the template repo")
+   ![Use this template](./images/template_button.png?raw=true "Cloning the template repo")
   - Enter your own repository name where prompted.
   - Leave **Include all branches** unchecked as you only need the master branch of the source repo copied.
   - Click **Create repository from template** to create your copy of this repository.
