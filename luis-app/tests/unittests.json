@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "text": "i want paid time off from july 23 to august 13",
     "intent": "RequestVacation",
@@ -16,14 +16,7 @@
               "type": "daterange",
               "values": [
                 {
-                  "timex": "(XXXX-07-23,XXXX-08-13,P21D)",
-                  "start": "2019-07-23",
-                  "end": "2019-08-13"
-                },
-                {
-                  "timex": "(XXXX-07-23,XXXX-08-13,P21D)",
-                  "start": "2020-07-23",
-                  "end": "2020-08-13"
+                  "timex": "(XXXX-07-23,XXXX-08-13,P21D)"
                 }
               ]
             }
@@ -121,14 +114,7 @@
               "type": "daterange",
               "values": [
                 {
-                  "timex": "(XXXX-03-03,XXXX-03-10,P7D)",
-                  "start": "2020-03-03",
-                  "end": "2020-03-10"
-                },
-                {
-                  "timex": "(XXXX-03-03,XXXX-03-10,P7D)",
-                  "start": "2021-03-03",
-                  "end": "2021-03-10"
+                  "timex": "(XXXX-03-03,XXXX-03-10,P7D)"
                 }
               ]
             }
@@ -155,12 +141,7 @@
               "type": "date",
               "values": [
                 {
-                  "timex": "XXXX-05-05",
-                  "value": "2019-05-05"
-                },
-                {
-                  "timex": "XXXX-05-05",
-                  "value": "2020-05-05"
+                  "timex": "XXXX-05-05"
                 }
               ]
             }

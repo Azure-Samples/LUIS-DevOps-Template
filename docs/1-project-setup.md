@@ -49,7 +49,10 @@ The CI/CD pipeline and the LUIS apps require some resources in Azure to be confi
 
 To set up these resources, click the following button:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Samples%2Fmaster%2Fazuredeploy.json)
+> **TEMPORARY:** URL behind this button is temporary while the repo is private. REMOVE THIS MESSAGE and change URL to correct target when this goes public.
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdaltskin%2FNLP-DevOps%2Fmaster%2Fazuredeploy.json)
+<!--
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Samples%2Fmaster%2Fazuredeploy.json) -->
 
 When you click the button, it takes you to a web page in the Azure Portal where you can enter the names of the resources. Take a note of the names you enter, as you will need them in the next step when we configure the CI/CD pipeline.:
 
