@@ -25,7 +25,9 @@ To create your repository:
 
 - If you don't already have a GitHub account, create one by following the instructions at [Join GitHub: Create your account](https://github.com/join).
 - Click the green **Use this template** button near the top of the [LUIS-DevOps-Samples](https://github.com/Azure-Samples/LUIS-DevOps-Samples) home page for this GitHub repo. This will copy this repository to a GitHub repository of your own that it will create.
+
    ![Use this template](./images/template_button.png?raw=true "Cloning the template repo")
+
   - Enter your own repository name where prompted.
   - Leave **Include all branches** unchecked as you only need the master branch of the source repo copied.
   - Click **Create repository from template** to create your copy of this repository.
@@ -50,6 +52,7 @@ The CI/CD pipeline and the LUIS apps require some resources in Azure to be confi
 To set up these resources, click the following button:
 
 > **TEMPORARY:** URL behind this button is temporary while the repo is private. REMOVE THIS MESSAGE and change URL to correct target when this goes public.
+
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdaltskin%2FNLP-DevOps%2Fmaster%2Fazuredeploy.json)
 <!--
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Samples%2Fmaster%2Fazuredeploy.json) -->
@@ -194,6 +197,7 @@ To configure these protections:
 1. On the Settings page, click on **Branches** in the Options menu
 
    ![Branch protection settings](./images/branch_protection_settings.png?raw=true "Accessing branch protection settings")
+
 1. Under **Branch protection rules**, click the **Add rule** button
 1. Configure the rule:
    1. In the **Branch name pattern** box, enter **master**
@@ -201,7 +205,8 @@ To configure these protections:
    1. Check **Require status checks to pass before merging**
    1. It is **not** recommended for the purposes of learning how to use this sample to also check **Include administrators**, as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
 
-   ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
+      ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
+
    1. Click the **Create** button at the bottom of the page
 
 ## Updating the LUIS app in a feature branch
