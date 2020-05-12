@@ -181,11 +181,18 @@ Save these keys in **GitHub Secrets** in your repository, using the following ke
 
 ## Protecting the master branch
 
-It is software engineering best practices to protect the master branch from direct check-ins. By protecting the master branch, you require all developers to check-in changes by raising a Pull Request and you may enforce certain workflows such as requiring more than one pull request review or requiring certain status checks to pass before allowing a pull request to merge. You can learn more about Configuring protected branches in GitHub [here](https://help.github.com/en/github/administering-a-repository/configuring-protected-branches).
+It is recommended and software engineering best practices to protect the master branch from direct check-ins. By protecting the master branch in this way, you require all developers to check-in changes by raising a Pull Request and you may enforce certain workflows such as requiring more than one pull request review or requiring certain status checks to pass before allowing a pull request to merge. You can learn more about Configuring protected branches in GitHub [here](https://help.github.com/en/github/administering-a-repository/configuring-protected-branches).
+
+Note that the CI/CD pipeline in this repository is configured to run when either of two GitHub events occur:
+
+- When a developer raises a pull request to merge to the master branch
+- When a merge to master occurs, for example after a PR is merged.
+
+Branch Protections are not required for either of these events to occur, so setting them can be considered optional for enabling the operation of the CI/CD pipeline. However, by setting branch protections as described in the rest of this section, you require developers to raise a PR in order to propose changes to master, which will trigger the CI/CD pipeline to execute. The branch protections can be set to enforce the requirement that the PR cannot be merged until the pipeline has completed successfully, so in this way the pipeline acts as a quality gate, working to maintain the quality of the code being checked in.
 
 > **Important:** Branch protections are supported on public GitHub repositories, or if you have a GitHub Pro subscription. If you are using a personal GitHub account and you created your repository as a private repository, you will have to change it to be **public** if you want to configure Branch protection policies. You can change your repository to be public in repository settings.
 
-You configure the specific workflows you require in your own software engineering organization. For the purposes of this sample, you will configure branch protections as follows:
+You may configure the specific workflows you require in your own software engineering organization. For the purposes of this sample, you will configure branch protections as follows:
 
 - **master** branch is protected from direct check-ins
 - Pull request requires **1** review approval (1 reviewer is suggested for this sample for simplicity, but it is considered best practice to require at least 2 reviewers on a real project)
