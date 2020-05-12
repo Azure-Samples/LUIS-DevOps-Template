@@ -14,7 +14,6 @@ In order to use this template to setup a repo for your own use, you will:
 - [Setup the CI/CD pipeline](#setup-the-ci/cd-pipeline)
   - [Set environment variables in the pipeline yaml](#set-environment-variables-for-resource-names-in-the-pipeline-yaml))
   - [Create the Azure Service Principal](#create-the-azure-service-principal)
-  - [Store LUIS Keys in GitHub Secrets](#store-luis-keys-in-github-secrets)
 - [Protect the master branch](#protecting-the-master-branch)
 
 ## Get the code
@@ -148,33 +147,6 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
    You access GitHub Secrets by clicking on the **Settings** tab on the home page of your repository, or by going to `https://github.com/{your-GitHub-Id}/{your-repository}/settings`. Then click on **Secrets** in the **Options** menu, which brings up the UI for entering Secrets, like this:
 
    ![GitHub Secrets](./images/gitHubSecretsAzure.png?raw=true "Saving in GitHub Secrets")
-
-### Store LUIS Keys in GitHub Secrets
-
-You must also save the LUIS Authoring and Prediction resource keys in GitHub Secrets so that the pipeline can use them.
-
-You can get the keys using the Azure CLI, specifying the Azure Resource Group name and the LUIS resource names you entered when you configured them in Azure.  If multiple keys are returned for any resource, you can use any one of them.
-
-**LUIS Authoring**
-
-<code>
-az cognitiveservices account keys list --name <i>{LUISAuthoringResourceName}</i> --resource-group <i>{ResourceGroup}</i>
-</code>
-
-**LUIS Prediction**
-
-<code>
-az cognitiveservices account keys list --name <i>{LUISPredictionResourceName}</i> --resource-group <i>{ResourceGroup}</i>
-</code>
-
-Save these keys in **GitHub Secrets** in your repository, using the following key names:
-
-| Key                      |         value                     |
-|--------------------------|-----------------------------------|
-| **LUISAuthoringKey**     |  The LUIS Authoring resource key  |
-| **LUISPredictionKey**    |  The LUIS Prediction resource key |  
-
-![LUIS resource keys saved in GitHub Secrets](./images/saveGitHubSecretsLUIS.png?raw=true "Saving the LUIS resource keys in GitHub Secrets")
 
 ## Protecting the master branch
 
