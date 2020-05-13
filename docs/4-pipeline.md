@@ -116,12 +116,22 @@ It starts by checking out the code and then fetching all the history and tags fo
 
 #### Log into Azure
 
-We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring endpoint needed later on:
+We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring key, prediction key and authoring endpoint that are needed later on:
 
 ```yml
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Get LUIS authoring key
+      run: |
+          az cognitiveservices account keys list --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "key1" | \
+          xargs -I {} echo "::set-env name=LUISAuthoringKey::{}"
+
+    - name: Get LUIS prediction key
+      run: |
+          az cognitiveservices account keys list --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "key1" | \
+          xargs -I {} echo "::set-env name=LUISPredictionKey::{}"
 
     - name: Get LUIS authoring endpoint
       run: |
@@ -168,7 +178,7 @@ If the pipeline is operating as a PR gateway, it creates a new app. `bf luis:app
     - name: Create PR check LUIS application
       if: github.event_name == 'pull_request'
       run: |
-        importResult=`bf luis:application:import --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }}  --in model.json`
+        importResult=`bf luis:application:import --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }}  --in model.json`
         echo "::set-env name=AppId::$(echo $(echo $importResult | cut -b 35-70))"
   ```
 
@@ -179,8 +189,8 @@ If operating as a Merge pipeline, the LUIS app is the one associated with the ma
     - name: Get master LUIS application ID
       if: github.event_name == 'push'
       run: |
-        bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --versionId=0.1
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --versionId=0.1
+        bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=AppId::{}"
         echo "Found LUIS app: $AppId"
@@ -191,7 +201,7 @@ Next, we check if the LUIS app currently has 100 versions (the limit), and if so
   ```yml
     - name: Purge LUIS app version
       run: |
-        version_count=$(bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} | jq 'length')
+        version_count=$(bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} | jq 'length')
         if [ $version_count -ge 100 ]; then
           echo "ERROR: LUIS app: $AppId version count will exceed 100. Delete unneeded versions before re-running pipeline"
           exit 1
@@ -204,7 +214,7 @@ Then we go ahead and create a new version in the LUIS app by importing the JSON 
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application
     - name: Create new LUIS application version
       if: github.event_name == 'push'
-      run: bf luis:version:import --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --in model.json
+      run: bf luis:version:import --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --in model.json
   ```
 
 #### Train and publish the LUIS app
@@ -212,7 +222,7 @@ Then we go ahead and create a new version in the LUIS app by importing the JSON 
   ```yml
     - name: Train luis
       shell: bash
-      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --wait
+      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --wait
   ```
 
 After the model has finished training we can publish our LUIS model. We use *direct version publishing* for this rather than publishing to the named slots, staging and production. We do this to be able to support more than two published versions at any one time so that multiple LUIS app versions can be in a published state at any one time to support more then two dev environments simultaneously (for example, DEV, QA, UAT, PRODUCTION. We use a cURL command here to call the REST API directly:
@@ -222,7 +232,7 @@ After the model has finished training we can publish our LUIS model. We use *dir
       run: |
         curl POST $POSTurl \
         -H "Content-Type: application/json" \
-        -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
+        -H "Ocp-Apim-Subscription-Key: ${{ env.LUISAuthoringKey }}" \
         --data-ascii "{'versionId': '$luisAppVersion', 'directVersionPublish': true}"
       env:
         POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/publish
@@ -257,7 +267,7 @@ In order to test a LUIS app, you must use a Azure LUIS Prediction resource key s
         curl POST $POSTurl \
         -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
         -H "Content-Type: application/json" \
-        -H "Ocp-Apim-Subscription-Key: ${{ secrets.LUISAuthoringKey }}" \
+        -H "Ocp-Apim-Subscription-Key: ${{ env.LUISAuthoringKey }}" \
         --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
       env:
         POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
@@ -273,7 +283,7 @@ To test the LUIS app version that was created, we use the unit test file:
         luisAppId: ${{ env.AppId }}
         luisVersionId: ${{ env.luisAppVersion }}
         luisDirectVersionPublish: true
-        luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisEndpointKey: ${{ env.LUISPredictionKey }}
         luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
@@ -301,7 +311,7 @@ Finally, if the pipeline is operating as a PR gate-check, the LUIS app created b
     - name: Delete luis test target app
       if: always() && (github.event_name == 'pull_request')
       shell: bash
-      run:  bf luis:application:delete --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --force
+      run:  bf luis:application:delete --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --force
   ```
 
 ### Job: LUIS quality testing
@@ -340,14 +350,14 @@ The pipeline step executes in its own build environment, so early in this step w
   ```yml
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=AppId::{}"
         echo "Found LUIS app: $AppId"
 
     - name: Get LUIS latest version ID
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 | \
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --take 1 | \
         jq '.[0].version' | \
         xargs -I {} echo "::set-env name=LuisVersion::{}"
   ```
@@ -364,7 +374,7 @@ Testing uses the verification test file rather than the unit test file:
         luisAppId: ${{ env.AppId }}
         luisVersionId: ${{ env.LuisVersion }}
         luisDirectVersionPublish: true
-        luisEndpointKey: ${{ secrets.LUISPredictionKey }}
+        luisEndpointKey: ${{ env.LUISPredictionKey }}
         luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
@@ -440,14 +450,14 @@ These steps determine the version Id of the model built by the **build** step:
   ```yml
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ secrets.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=AppId::{}"
         echo "Found LUIS app: $AppId"
 
     - name: Get LUIS latest version ID
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ secrets.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
+        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
         cat luis_latest_version.json | jq '.[0].version' | \
         xargs -I {} echo "::set-env name=LuisVersion::{}"
   ```

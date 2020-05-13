@@ -14,7 +14,6 @@ In order to use this template to setup a repo for your own use, you will:
 - [Setup the CI/CD pipeline](#setup-the-ci/cd-pipeline)
   - [Set environment variables in the pipeline yaml](#set-environment-variables-for-resource-names-in-the-pipeline-yaml))
   - [Create the Azure Service Principal](#create-the-azure-service-principal)
-  - [Store LUIS Keys in GitHub Secrets](#store-luis-keys-in-github-secrets)
 - [Protect the master branch](#protecting-the-master-branch)
 
 ## Get the code
@@ -25,7 +24,9 @@ To create your repository:
 
 - If you don't already have a GitHub account, create one by following the instructions at [Join GitHub: Create your account](https://github.com/join).
 - Click the green **Use this template** button near the top of the [LUIS-DevOps-Samples](https://github.com/Azure-Samples/LUIS-DevOps-Samples) home page for this GitHub repo. This will copy this repository to a GitHub repository of your own that it will create.
-   ![Use this template](/images/template_button.png?raw=true "Cloning the template repo")
+
+   ![Use this template](./images/template_button.png?raw=true "Cloning the template repo")
+
   - Enter your own repository name where prompted.
   - Leave **Include all branches** unchecked as you only need the master branch of the source repo copied.
   - Click **Create repository from template** to create your copy of this repository.
@@ -50,6 +51,7 @@ The CI/CD pipeline and the LUIS apps require some resources in Azure to be confi
 To set up these resources, click the following button:
 
 > **TEMPORARY:** URL behind this button is temporary while the repo is private. REMOVE THIS MESSAGE and change URL to correct target when this goes public.
+
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdaltskin%2FNLP-DevOps%2Fmaster%2Fazuredeploy.json)
 <!--
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Samples%2Fmaster%2Fazuredeploy.json) -->
@@ -149,33 +151,6 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
 
    ![GitHub Secrets](./images/gitHubSecretsAzure.png?raw=true "Saving in GitHub Secrets")
 
-### Store LUIS Keys in GitHub Secrets
-
-You must also save the LUIS Authoring and Prediction resource keys in GitHub Secrets so that the pipeline can use them.
-
-You can get the keys using the Azure CLI, specifying the Azure Resource Group name and the LUIS resource names you entered when you configured them in Azure.  If multiple keys are returned for any resource, you can use any one of them.
-
-**LUIS Authoring**
-
-<code>
-az cognitiveservices account keys list --name <i>{LUISAuthoringResourceName}</i> --resource-group <i>{ResourceGroup}</i>
-</code>
-
-**LUIS Prediction**
-
-<code>
-az cognitiveservices account keys list --name <i>{LUISPredictionResourceName}</i> --resource-group <i>{ResourceGroup}</i>
-</code>
-
-Save these keys in **GitHub Secrets** in your repository, using the following key names:
-
-| Key                      |         value                     |
-|--------------------------|-----------------------------------|
-| **LUISAuthoringKey**     |  The LUIS Authoring resource key  |
-| **LUISPredictionKey**    |  The LUIS Prediction resource key |  
-
-![LUIS resource keys saved in GitHub Secrets](./images/saveGitHubSecretsLUIS.png?raw=true "Saving the LUIS resource keys in GitHub Secrets")
-
 ## Protecting the master branch
 
 It is software engineering best practices to protect the master branch from direct check-ins. By protecting the master branch, you require all developers to check-in changes by raising a Pull Request and you may enforce certain workflows such as requiring more than one pull request review or requiring certain status checks to pass before allowing a pull request to merge. You can learn more about Configuring protected branches in GitHub [here](https://help.github.com/en/github/administering-a-repository/configuring-protected-branches).
@@ -193,7 +168,8 @@ To configure these protections:
 1. In the home page for your repository on **GitHub.com**, click on **Settings**
 1. On the Settings page, click on **Branches** in the Options menu
 
-   ![Branch protection settings](/images/branch_protection_settings.png?raw=true "Accessing branch protection settings")
+   ![Branch protection settings](./images/branch_protection_settings.png?raw=true "Accessing branch protection settings")
+
 1. Under **Branch protection rules**, click the **Add rule** button
 1. Configure the rule:
    1. In the **Branch name pattern** box, enter **master**
@@ -201,7 +177,8 @@ To configure these protections:
    1. Check **Require status checks to pass before merging**
    1. It is **not** recommended for the purposes of learning how to use this sample to also check **Include administrators**, as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
 
-   ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
+      ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
+
    1. Click the **Create** button at the bottom of the page
 
 ## Updating the LUIS app in a feature branch
