@@ -5,11 +5,11 @@ This document explains how to create a feature branch in your GitHub repository,
 In this example, we follow the [GitHubFlow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. When using this strategy, in outline:
 
 * Developer creates a feature branch and does the feature/work in that branch.
-* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master.
-* The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it.
+* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master. The developer works on the updates using a LUIS app that they create solely to support the work in the feature branch.
+* The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check. It builds a temporary LUIS app from the source in the PR, runs unit tests against it and then deletes it at the end of the run.
 * If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
 * The merge to master automatically triggers the full CI/CD pipeline which:
-  * Creates a new LUIS app version in the master LUIS app from the merged source.
+  * Creates a new LUIS app version in the *master* LUIS app from the merged source. This LUIS app will be created if it does not already exist, such as on first run of the CI/CD pipeline.
   * Runs unit test against it. If the tests fail, GitHub fails the pipeline and notifies repository members by email.
   * If unit tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository.
   * Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version.
@@ -70,7 +70,7 @@ To make updates using the LUIS Portal:
 
 > **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this tutorial. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
-1. Select your Azure Subscription and your LUIS Authoring resource, and then you will create a LUIS app that you will use just for the work in this feature branch:
+1. Select your Azure Subscription and your LUIS Authoring resource, and then you will create a LUIS app that you will use solely to support the work in this feature branch:
 
    1. First convert the **model.lu** file to JSON format using the Bot Framework CLI and save it to the same folder (**Note:** *luis-app/model.json* has already been added to the .gitignore file for this repository so that it will be considered as a transient file and will not be tracked by git):  
    `$ bf luis:convert -i luis-app/model.lu -o luis-app/model.json`
@@ -192,9 +192,9 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
 
 If you click on the **Actions** tab immediately after you merge your pull request, you will see that the full CI/CD pipeline has already been triggered and is executing by the push to master. This pipeline is the same as the one that executed for the pull request but has some important differences in operation:
 
-* It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file.
+* It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file. The app is created if it does not already exist, such as on first run of the pipeline.
 * It runs the job **Build and Test LUIS model** which builds the new LUIS master app version and runs unit tests against it.
-* If the tests pass, it runs the **Create LUIS Release** job . This is a simple job that creates a GitHub release for the new version. It is a simple example of a CD (Continuous Delivery) pipeline.
+* If the tests pass, it runs the **Create LUIS Release** job . This job creates a GitHub release for the new version. It is a simple example of a CD (Continuous Delivery) pipeline.
 * It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the batch testing capability in the LUIS portal). This job runs concurrently with the **Create LUIS Release** job.
 * If the pipeline fails, the repository contributors and the author of the pull request are notified by email and must determine the failing tests and resolve the code failures that caused the pipeline failure.
 
@@ -233,7 +233,12 @@ In this:
 * **VersionId** - the version ID of the new version in the GitHub release.
 * **LUISSubscriptionKey** - the LUIS Prediction resource key. Get this from the Manage tab for your master LUIS app in the LUIS portal, and then go to Azure Resources. Copy the **Primary Key** shown for the Prediction Resource.
 
-When you have all the information, open a browser and paste in the complete URL with a query such as *I want my vacation to start on July 4th and to last for 10 days*. You will see the prediction response returned from the LUIS service:
+When you have all the information, open a browser and paste in the complete URL with a query such as: 
+
+* *Great now I can do devops with my LUIS apps* which should return a prediction response for the *None* intent.
+* You could also try *I want my vacation to start on July 4th and to last for 10 days* which will predict the *RequestVacation* intent.
+
+You will see the prediction response returned from the LUIS service:
 
 ![Prediction request](images/prediction.png?raw=true "Prediction request")
 
