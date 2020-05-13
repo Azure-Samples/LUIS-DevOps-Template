@@ -210,7 +210,7 @@ To configure these protections:
    1. In the **Branch name pattern** box, enter **master**
    1. Check **Require pull request reviews before merging**
    1. Check **Require status checks to pass before merging**
-   1. It is **not** recommended for the purposes of learning how to use this sample to also check **Include administrators**, as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
+   1. **Do not** check **Include administrators** as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
 
       ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
 
