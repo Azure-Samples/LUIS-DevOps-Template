@@ -54,6 +54,8 @@ The CI/CD pipeline and the LUIS apps require some resources in Azure to be confi
 
 To set up these resources, click the following button:
 
+*Important:* Ensure that you have logged into the [LUIS authoring portal](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions) for your chosen region prior to execuring this template.
+
 > **TEMPORARY:** URL behind this button is temporary while the repo is private. REMOVE THIS MESSAGE and change URL to correct target when this goes public.
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdaltskin%2FNLP-DevOps%2Fmaster%2Fazuredeploy.json)
@@ -66,6 +68,8 @@ When you click the button, you will be directed to the Azure Portal where you wi
 - **LUIS Authoring resource name** - must be unique across Azure
 - **LUIS Prediction resource name** - must be unique across Azure
 - **Storage account name** - 8-24 characters, lowercase letters and numbers, and must be unique across Azure
+
+
 
 ## Setup the CI/CD pipeline
 
