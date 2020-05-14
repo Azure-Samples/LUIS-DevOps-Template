@@ -2,10 +2,10 @@
 
 This document explains how to create a feature branch in your GitHub repository, how to make updates to your LUIS app and to save changes in source control, how to raise a pull request (PR) to merge the updates back into the master branch and how to execute continuous integration pipelines.
 
-In this example, we follow the [GitHubFlow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. When using this strategy, in outline:
+In this example, we follow the [GitHub flow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. Broadly you will follow this flow:
 
 * Developer creates a feature branch and does the feature/work in that branch.
-* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master.
+* When done, the developer does a push of their changes and raises a pull request from their feature branch to master.
 * The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it.
 * If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
 * The merge to master automatically triggers the full CI/CD pipeline which:
@@ -20,14 +20,18 @@ This document explains how to run through these steps. Note that all steps invol
 
 You will be performing the following steps to make updates to the LUIS app:
 
-* [Installing the required command line tools](#installing-the-required-command-line-tools)
-* [Creating a feature branch](#creating-a-feature-branch)
-* [Making your LUIS app updates](#make-your-luis-app-updates)
-* [Testing the new LUIS model](#testing-the-new-luis-model)
-* [Raising the pull request](#raising-the-pull-request)
-* [Running the CI/CD pipeline](#running-the-cicd-pipeline)
-* [Verifying the new LUIS master app version](#verifying-the-new-luis-master-app-version)
-* [Executing predictions against the LUIS app version endpoint](#executing-predictions-against-the-luis-app-version-endpoint)
+- [2. Making updates to a LUIS app in a feature branch](#2-making-updates-to-a-luis-app-in-a-feature-branch)
+  - [Installing the required command line tools](#installing-the-required-command-line-tools)
+  - [Creating a feature branch](#creating-a-feature-branch)
+  - [Make your LUIS app updates](#make-your-luis-app-updates)
+    - [Update the LUIS app using the LUIS Portal](#update-the-luis-app-using-the-luis-portal)
+  - [Testing the new LUIS model](#testing-the-new-luis-model)
+    - [Setting up for testing](#setting-up-for-testing)
+    - [Testing the LUIS app](#testing-the-luis-app)
+  - [Raising the pull request](#raising-the-pull-request)
+  - [Running the CI/CD pipeline](#running-the-cicd-pipeline)
+    - [Verifying the new LUIS master app version](#verifying-the-new-luis-master-app-version)
+    - [Executing predictions against the LUIS app version endpoint](#executing-predictions-against-the-luis-app-version-endpoint)
 
 ## Installing the required command line tools
 
@@ -63,12 +67,16 @@ For minor updates to a LUIS app, it is possible to edit the **model.lu** file di
 
 To make updates using the LUIS Portal:
 
-1. Sign into the LUIS portal for [your authoring and publishing region](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions):
+1. Sign into the LUIS *preview* portal for [your authoring and publishing region](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions):
    * LUIS authoring portal - [https://preview.luis.ai](https://preview.luis.ai/home)
    * LUIS authoring portal (Europe) - [https://preview.eu.luis.ai](https://preview.eu.luis.ai/home)
    * LUIS authoring portal (Asia) - [https://preview.au.luis.ai](https://preview.au.luis.ai/home)
 
-1. Select your Azure Subscription and your LUIS Authoring resource, and then you will create a LUIS app that you will use just for the work in this feature branch:
+1. Select your Azure Subscription and your LUIS Authoring resource.
+
+   ![Select Authoring Resource](images/LUIS_portal_authoring_resource.png?raw=true "Import as LU")
+
+1. You will now create a LUIS app that you will use just for the work in this feature branch:
 
    1. First convert the **model.lu** file to JSON format using the Bot Framework CLI and save it to the same folder (**Note:** *luis-app/model.json* has already been added to the .gitignore file for this repository so that it will be considered as a transient file and will not be tracked by git):  
    `$ bf luis:convert -i luis-app/model.lu -o luis-app/model.json`
@@ -81,13 +89,13 @@ To make updates using the LUIS Portal:
 1. Now you can make your changes to the app. For the purposes of this sample, you will add a new training utterance to the **None** intent.
    1. From the **Intents** editor, click on the **None** intent.
 
-   1. Enter a new example utterance, for example: **Great that we can do DevOps with LUIS** and hit **Enter**.
+   2. Enter a new example utterance, for example: **Great that we can do DevOps with LUIS** and hit **Enter**.
 
    ![Updating the None intent](images/noneintent.png?raw=true "Updating the None intent")
 
    1. Click **Train** at the top of the page.
 
-   1. When training is complete, then click **Publish**, select **Staging Slot** and then click **Done**.
+   2. When training is complete, then click **Publish**, select **Staging Slot** and then click **Done**.
 
 ## Testing the new LUIS model
 
@@ -207,7 +215,7 @@ You can go to the LUIS Portal to the **My apps** page, select your Azure subscri
 
 ### Executing predictions against the LUIS app version endpoint
 
-You can test out the new LUIS app version by sending a prediction request fro the browser. The URI format for the app version endpoint is as follows:
+You can test out the new LUIS app version by sending a prediction request from the browser. The URI format for the app version endpoint is as follows:
 
 <code>
 https://<i>{Subdomain}</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/versions/<i>{VersionId}</i>/predict?verbose=true&timezoneOffset=0&subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
