@@ -13,11 +13,11 @@ The pipeline operates in two distinct modes of operation:
 
 ### Triggers
 
-When triggered for a PR, the pipeline acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the pipeline if any test fail, which will block completion of the PR. At the end the temporary LUIS app is deleted.
+When triggered for a PR, the pipeline acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the pipeline if any tests fail; this will block completion of the PR. At the end the temporary LUIS app is deleted.
 
 When triggered for a merge to master, the pipeline creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and from which the prediction endpoint URL can be determined for use in release environments. In this mode, it also runs quality tests to determine the F measure for the new model.
 
-The configuration for triggering this in the pipeline is as follows:
+The configuration ensures that the pipeline will be triggered when either the *LUIS model* or the *test suite* is changed:
 
   ```yml
     name: LUIS-CI
@@ -63,7 +63,7 @@ env:
   IS_PRIVATE_REPOSITORY: false
 ```
 
-In addition, the following environment variables set the names of the source file that defines your LUIS app, and the files containing the unit tests and the F measure quality tests:
+In addition, the following environment variables set the names of the source file that define your LUIS app, and the files containing the unit tests and the F measure quality tests:
 
 ```yml
   # Set the path to the lu file for your LUIS app
@@ -80,7 +80,7 @@ The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your 
 
 ### Job: Build
 
-The pipeline is divided into three discrete jobs. Each job runs independently in its own environment and the pipeline is configured so that the **build** job executes first, followed by the **LUIS_quality_testing** job and the **release** job.
+The pipeline is divided into three discrete jobs. Each job runs independently but sequentially in its own environment and the pipeline is configured so that the **build** job executes first, followed by the **LUIS_quality_testing** job and the **release** job.
 
 The first job builds and unit tests the LUIS model.
 
@@ -141,7 +141,7 @@ We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets 
 
 #### Install Bot Framework CLI
 
-Next we install node.js (necessary for running the Bot Framework CLI) and the BF CLI. Before we will be able to run any botframework-cli commands in CI we need to disable telemetry using the workaround shown ([GitHub issue](https://github.com/microsoft/botframework-cli/issues/370)):
+Next we install node.js (necessary for running the Bot Framework CLI) and the BF CLI. Before we will be able to run any botframework-cli commands in CI we need to disable telemetry using the workaround shown in this [GitHub issue](https://github.com/microsoft/botframework-cli/issues/370):
 
   ```yml
     - uses: actions/setup-node@v1
@@ -159,8 +159,8 @@ Next we install node.js (necessary for running the Bot Framework CLI) and the BF
 #### Build LUIS app version
 
 The next stage of the pipeline creates a LUIS model.
-We use [ludown.lu](./ludown.lu) file for training. We use the [LuDown format](https://github.com/microsoft/botbuilder-tools/tree/master/packages/Ludown#ludown) to define the LUIS app version since it can be maintained in a source control system and enables the reviewing process because of its legibility.
-You can replace this file with another file that defines the intents, utterances, entities that you need for your own model.
+We import and use a [ludown.lu](./ludown.lu) file for training. We use the [LuDown format](https://github.com/microsoft/botbuilder-tools/tree/master/packages/Ludown#ludown) to define the LUIS app version since it can be maintained in a source control system and is human readable to allow us to work with it outside the LUIS portal's GUI tool.
+You can replace this file with another file that defines the intents, utterances, entities that you need for your own model. This may be useful if you are generating your training data from some other system or by some other mechanism. Ultimately, we need to provide the information in the LUIS JSON format and the BF CLI provides tooling to support this.
 
 The first step transforms the ludown file to a LUIS JSON file using the botframework-cli:
 
@@ -171,7 +171,7 @@ The first step transforms the ludown file to a LUIS JSON file using the botframe
 
 The `model.json` file output must be imported to LUIS. This happens in different ways depending on whether the pipeline is operating as a PR gate-check - where it creates a new LUIS app for testing which is deleted at the end of the pipeline - or if operating as a Merge pipeline.
 
-If the pipeline is operating as a PR gateway, it creates a new app. `bf luis:application:import` returns a string with LUIS App ID that we will need to use in the next steps, so we save the AppId in an environment variable called *AppId*:
+If the pipeline is operating as a PR gate, it creates a new app. `bf luis:application:import` returns a string with the LUIS App ID that we will need to use in the next steps, so we save the AppId in an environment variable called *AppId*:
 
   ```yml
     # When doing a gate check on PRs, we build a new LUIS application for testing that is later deleted
@@ -182,7 +182,7 @@ If the pipeline is operating as a PR gateway, it creates a new app. `bf luis:app
         echo "::set-env name=AppId::$(echo $(echo $importResult | cut -b 35-70))"
   ```
 
-If operating as a Merge pipeline, the LUIS app is the one associated with the master branch. This app will be created if it does not already exist. This step determines the AppId and saves it in the *AppId* environment variable:
+If operating as a Merge pipeline, the LUIS app is the one associated with the master branch and we use the name specfied in the YAML file. The app will be created if it does not already exist. This step determines the AppId (GUID) and saves it in the *AppId* environment variable:
 
   ```yml
     # When doing a merge to master, use the master LUIS app - create if necessary (soft fails if exists)
@@ -219,6 +219,8 @@ Then we go ahead and create a new version in the LUIS app by importing the JSON 
 
 #### Train and publish the LUIS app
 
+The BF CLI is used to initiate the training of the model and to *wait* for this to complete. You should be aware that Github Actions have a limit on [*Job* and *Workflow* runtime](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions) of 6hr and 72hr respectively. It is unlikely that your model training will hit these limits.
+
   ```yml
     - name: Train luis
       shell: bash
@@ -240,7 +242,7 @@ After the model has finished training we can publish our LUIS model. We use *dir
 
 #### Testing the LUIS app
 
-To prepare for testing, we install the NLU.DevOps test tool:
+To prepare for testing, we install the [NLU.DevOps](https://github.com/Microsoft/NLU.DevOps) test tool:
 
   ```yml
     - name: Install dotnet-nlu
@@ -254,7 +256,7 @@ On the ubuntu agent, you need to append the tools directory to the system PATH v
       run: echo "::add-path::$HOME/.dotnet/tools"
   ```
 
-In order to test a LUIS app, you must use a Azure LUIS Prediction resource key since the Authoring key is not practicable since it is subject to throttling causing the tests to fail. Here we assign the Azure LUIS prediction resource to the application. Note that here we access the REST API using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources:
+In order to test a LUIS app, you must use an Azure LUIS Prediction resource key. The Authoring key is not practicable since it is subject to throttling which may cause the tests to fail unnecessarily. Here we assign the Azure LUIS prediction resource to the application. Note that once again we access the REST API directly using curl as the BotFramework CLI does not support the allocation of Azure LUIS resources at this time:
 
   ```yml
     - name: Get Azure subscriptionId
@@ -304,7 +306,7 @@ We archive the test results as a build pipeline artifact:
         path: unittest/TestResult.xml
   ```
 
-Finally, if the pipeline is operating as a PR gate-check, the LUIS app created by this pipeline is deleted again:
+Finally, if the pipeline is operating as a PR gate-check, the LUIS app created by this pipeline is deleted:
 
   ```yml
       # Delete the LUIS app again if we are executing as gate check on a PR
@@ -316,7 +318,11 @@ Finally, if the pipeline is operating as a PR gate-check, the LUIS app created b
 
 ### Job: LUIS quality testing
 
-In the LUIS quality testing job in the CI/CD pipeline, we execute the LUIS F-measure tests to calculate the F-measure and to produce the test results file, which contains:
+The quality testing step only executes after the **build** step has succeeded and only if we are operating as a Merge pipeline. 
+
+Also note that the `BASELINE_CONTAINER_NAME` environment variable needs to be set at the top of the luis_ci.yaml in order to enable comparisonws with previous model training runs. This variable should be an Azure blob container name which is then used to store the baseline set of test results that we will use to compare our newly built model against. Leaving this environment variable blank will skip the comparison stage.
+
+In the LUIS quality testing job in the CI/CD pipeline, we execute the LUIS F-measure tests using the [LUIS batch API](https://docs.microsoft.com/en-us/azure/cognitive-services/LUIS/luis-how-to-batch-test) via NLU.DevOps to calculate the F-measure and to produce the test results file, which contains:
 
 * For each Intent and Entity:
   * Count of true positives for passing tests
@@ -329,8 +335,6 @@ In the pipeline:
 * We publish the F-measure for this build as a build artifact and save to blob storage
 * Fetch the test results for the previous build from blob storage
 * Publish the comparison between the current build and the previous build for the F-measure
-
-The step only executes after the **build** step has succeeded and only if we are operating as a Merge pipeline. There is also the `BASELINE_CONTAINER_NAME` environment variable that needs to be set at the top of the luis_ci.yaml file with the container name of a baseline set of test results that we want to compare our newly built model to. Leave blank to skip the comparison stage.
 
   ```yml
   # Job: LUIS quality testing
@@ -380,7 +384,7 @@ Testing uses the verification test file rather than the unit test file:
 
 #### Compare F measure results with baseline
 
-If you have set the `BASELINE_CONTAINER_NAME` environment variable to the name of a container in Azure Storage containing test results from a previous run, then we will download those test results to use as the baseline:
+If you have set the `BASELINE_CONTAINER_NAME` environment variable to the name of a container in Azure Storage then the pipeline will begin storing previous test results.  If results from a previous run exists, then we will download those test results to use as the comparison baseline:
 
   ```yml
     - name: download baseline
@@ -393,7 +397,7 @@ If you have set the `BASELINE_CONTAINER_NAME` environment variable to the name o
 
   ```
 
-Then we compare the results from testing the new model with the baseline model results:
+Then we compare the results from testing the new model with the test results from the baseline model:
 
   ```yml
     - name: Compare Luis model F-measure with baseline
