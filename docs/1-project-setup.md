@@ -164,7 +164,7 @@ Branch Protections are not required for either of these events to occur, so sett
 
 > **Important:** Branch protections are supported on public GitHub repositories, or if you have a GitHub Pro subscription. If you are using a personal GitHub account and you created your repository as a private repository, you will have to change it to be **public** if you want to configure Branch protection policies. You can change your repository to be public in repository settings.
 
-You may configure the specific branch protections you require in your own software engineering organization. In order to support the developer workflow described in the documentation in this template repo, you will configure branch protections as follows:
+You may configure the specific branch protections you require in your own software engineering organization. In order to support the solution walkthrough described in this documentation, you will configure branch protections as follows:
 
 - **master** branch is protected from direct check-ins
 - Pull request requires **1** review approval
