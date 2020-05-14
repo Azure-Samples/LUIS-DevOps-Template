@@ -12,7 +12,7 @@ In order to use this template to setup a repo for your own use, you will:
 - [Clone the repository](#clone-your-repository) to your own machine
 - [Provision Azure resources](#provisioning-azure-resources)
 - [Setup the CI/CD pipeline](#setup-the-ci/cd-pipeline)
-  - [Set environment variables in the pipeline yaml](#set-environment-variables-for-resource-names-in-the-pipeline-yaml))
+  - [Set environment variables in the pipeline yaml](#set-environment-variables-for-resource-names-in-the-pipeline-yaml)
   - [Create the Azure Service Principal](#create-the-azure-service-principal)
   - [Store LUIS Keys in GitHub Secrets](#store-luis-keys-in-github-secrets)
 - [Protect the master branch](#protecting-the-master-branch)
@@ -181,7 +181,7 @@ Save these keys in **GitHub Secrets** in your repository, using the following ke
 
 ## Protecting the master branch
 
-It is recommended and software engineering best practices to protect the master branch from direct check-ins. By protecting the master branch in this way, you require all developers to check-in changes by raising a Pull Request and you may enforce certain workflows such as requiring more than one pull request review or requiring certain status checks to pass before allowing a pull request to merge. You can learn more about Configuring protected branches in GitHub [here](https://help.github.com/en/github/administering-a-repository/configuring-protected-branches).
+It is recommended (and a software engineering best practice) to protect the master branch from direct check-ins. By protecting the master branch in this way, you require all developers to check-in changes by raising a Pull Request and you may enforce certain workflows such as requiring more than one pull request review or requiring certain status checks to pass before allowing a pull request to merge. Read [Configuring protected branches](https://help.github.com/en/github/administering-a-repository/configuring-protected-branches) to learn more about protecting branches in GitHub.
 
 Note that the CI/CD pipeline in this repository is configured to run when either of two GitHub events occur:
 
@@ -192,10 +192,10 @@ Branch Protections are not required for either of these events to occur, so sett
 
 > **Important:** Branch protections are supported on public GitHub repositories, or if you have a GitHub Pro subscription. If you are using a personal GitHub account and you created your repository as a private repository, you will have to change it to be **public** if you want to configure Branch protection policies. You can change your repository to be public in repository settings.
 
-You may configure the specific workflows you require in your own software engineering organization. For the purposes of this sample, you will configure branch protections as follows:
+You may configure the specific branch protections you require in your own software engineering organization. In order to support the developer workflow described in the documentation in this template repo, you will configure branch protections as follows:
 
 - **master** branch is protected from direct check-ins
-- Pull request requires **1** review approval (1 reviewer is suggested for this sample for simplicity, but it is considered best practice to require at least 2 reviewers on a real project)
+- Pull request requires **1** review approval
 - Status check configured so that the automation pipeline when triggered by a Pull Request must complete successfully before the PR can be merged.
 
 To configure these protections:
@@ -210,7 +210,7 @@ To configure these protections:
    1. In the **Branch name pattern** box, enter **master**
    1. Check **Require pull request reviews before merging**
    1. Check **Require status checks to pass before merging**
-   1. **Do not** check **Include administrators** as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this tutorial. However for a real project, consider checking this to enforce all the configured restrictions for administrators as well.
+   1. **Do not** check **Include administrators** as we will use the fact that you are an administrator of this repository to bypass restrictions on merging later on in this [developer workflow walkthrough](2-feature-branches-and-running-pipelines.md#raising-the-pull-request). When you configure this repository to support your own project, consider checking this to enforce all the configured restrictions for administrators as well.
 
       ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
 

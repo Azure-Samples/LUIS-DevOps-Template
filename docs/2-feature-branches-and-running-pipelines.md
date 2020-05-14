@@ -68,7 +68,7 @@ To make updates using the LUIS Portal:
    * LUIS authoring portal (Europe) - [https://eu.luis.ai](https://eu.luis.ai/home)
    * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)
 
-> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this tutorial. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
+> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
 1. Select your Azure Subscription and your LUIS Authoring resource, and then you will create a LUIS app that you will use solely to support the work in this feature branch:
 
@@ -152,7 +152,7 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
 
     * Alternatively, to export the app from the LUIS portal:
        1. In the LUIS Portal, click the **Manage** tab at the top of the page, and then go to the **Versions** page.
-       1. Select the latest version (there will only be one, version 0.1, if you have been following this tutorial), click **Export** and then click **Export as LU**.
+       1. Select the latest version (there will only be one, version 0.1, if you have been following this solution walkthrough), click **Export** and then click **Export as LU**.
        1. Take the downloaded file (currently named as *{LUIS App Id}*_v0.1.lu) and rename it to **model.lu**
 
 1. Copy the new **model.lu** file to **luis-app/model.lu** in your project, replacing the existing version of that file.
