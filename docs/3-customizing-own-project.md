@@ -15,11 +15,11 @@ If you have built the sample project and have the pipeline working, it is very s
 
    ![Export to LU](images/exportlu.png?raw=true "Exporting to LU")
 
-1. Replace the contents of the **luis-app/tests/unittests.json** file with your own unit tests.
+1. Replace the contents of the **luis-app/tests/unittests.json** file with your own unit tests. Unit testing is performed by the [NLU.DevOps](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md) tool.
 
-1. Replace the contents of the **luis-app/tests/verificationtests.json** file with your own verification tests.
+1. Replace the contents of the **luis-app/tests/verificationtests.json** file with your own verification tests. The verification tests use the [LUIS batch test](https://docs.microsoft.com/en-us/azure/cognitive-services/LUIS/luis-how-to-batch-test) capability.
 
-1. Follow the steps described in [Setup the CI/CD pipeline](../README.md#setup-the-ci/cd-pipeline) to ensure that the CI/CD pipeline is configured correctly for your project.
+1. Follow the steps described in [Setup the CI/CD pipeline](1-project-setup.md#setup-the-cicd-pipeline) to ensure that the CI/CD pipeline is configured correctly for your project.
 
 1. Check in your changes and raise a PR to merge them into the master branch.
 
