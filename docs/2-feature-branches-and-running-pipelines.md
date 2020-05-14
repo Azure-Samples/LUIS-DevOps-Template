@@ -5,11 +5,11 @@ This document explains how to create a feature branch in your GitHub repository,
 In this example, we follow the [GitHubFlow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. When using this strategy, in outline:
 
 * Developer creates a feature branch and does the feature/work in that branch.
-* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master.
-* The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check, building a transient LUIS app from the source in the PR and runs unit tests against it.
+* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master. The developer works on the updates using a LUIS app that they create solely to support the work in the feature branch.
+* The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check. It builds a temporary LUIS app from the source in the PR, runs unit tests against it and then deletes it at the end of the run.
 * If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
 * The merge to master automatically triggers the full CI/CD pipeline which:
-  * Creates a new LUIS app version in the master LUIS app from the merged source.
+  * Creates a new LUIS app version in the *master* LUIS app from the merged source. This LUIS app will be created if it does not already exist, such as on first run of the CI/CD pipeline.
   * Runs unit test against it. If the tests fail, GitHub fails the pipeline and notifies repository members by email.
   * If unit tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository.
   * Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version.
@@ -64,11 +64,13 @@ For minor updates to a LUIS app, it is possible to edit the **model.lu** file di
 To make updates using the LUIS Portal:
 
 1. Sign into the LUIS portal for [your authoring and publishing region](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions):
-   * LUIS authoring portal - [https://preview.luis.ai](https://preview.luis.ai/home)
-   * LUIS authoring portal (Europe) - [https://preview.eu.luis.ai](https://preview.eu.luis.ai/home)
-   * LUIS authoring portal (Asia) - [https://preview.au.luis.ai](https://preview.au.luis.ai/home)
+   * LUIS authoring portal - [https://www.luis.ai](https://www.luis.ai/home)
+   * LUIS authoring portal (Europe) - [https://eu.luis.ai](https://eu.luis.ai/home)
+   * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)
 
-1. Select your Azure Subscription and your LUIS Authoring resource, and then you will create a LUIS app that you will use just for the work in this feature branch:
+> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
+
+1. Select your Azure Subscription and your LUIS Authoring resource, and then you will create a LUIS app that you will use solely to support the work in this feature branch:
 
    1. First convert the **model.lu** file to JSON format using the Bot Framework CLI and save it to the same folder (**Note:** *luis-app/model.json* has already been added to the .gitignore file for this repository so that it will be considered as a transient file and will not be tracked by git):  
    `$ bf luis:convert -i luis-app/model.lu -o luis-app/model.json`
@@ -138,15 +140,22 @@ To find out more about unit testing with NLU.DevOps, read [Testing an NLU model]
 
 Now that the changes have been applied to the LUIS app and you have tested it, you must download the updated LUIS app from the LUIS Portal and check in your changes and raise the PR.
 
-1. Export the updated LUIS app:
-   1. In the LUIS Portal, click the **Manage** tab at the top of the page, and then go to the **Versions** page.
-   1. Select the latest version (there will only be one, version 0.1, if you have been following this tutorial) and then click **Export**.
-   1. In the dropdown menu, click **Export as JSON**. [**IMPORTANT:** Do *not* use the *Export as LU* option at this time as it has a bug.]
+1. Download the LUIS app version and convert to LUDown either at the command line or using the LUIS portal:
 
-1. Take the downloaded file (currently named as *{LUIS App Id}*_v0.1.json) and convert it to LUDown:  
-<code>$ bf luis:convert -i <i>{downloaded file}</i>.json -o model.lu</code>
+    * To download the app version at the command line:
+       1. Use the following command:  
+       <code>$ bf luis:version:export --appId <i>{your-appId}</i> --versionId "0.1" --endpoint <i>{your-authoring-endpoint}</i> --subscriptionKey <i>{your-authoring-key}</i> --out model.json</code>
+          > Note: The App ID and Authoring Key are the same values you entered in the *appsettings.local.json* file. You can get the Authoring Endpoint from the **Manage** tab, **Azure Resources** page for your app in the Azure portal.
 
-1. Copy the **model.lu** file to **luis-app/model.lu** in your project, replacing the existing version of that file.
+       1. Convert the JSON file to LUDown:  
+       <code>$ bf luis:convert -i model.json -o model.lu</code>
+
+    * Alternatively, to export the app from the LUIS portal:
+       1. In the LUIS Portal, click the **Manage** tab at the top of the page, and then go to the **Versions** page.
+       1. Select the latest version (there will only be one, version 0.1, if you have been following this solution walkthrough), click **Export** and then click **Export as LU**.
+       1. Take the downloaded file (currently named as *{LUIS App Id}*_v0.1.lu) and rename it to **model.lu**
+
+1. Copy the new **model.lu** file to **luis-app/model.lu** in your project, replacing the existing version of that file.
 
 1. Add your changed file(s) to the commit and commit the changes:  
 `$ git add -A`  
@@ -168,6 +177,7 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
    ![pull request status](images/prstatuschecks.png?raw=true "Pull Request Status")
 
     * You can click on the **Details** link next to the Build pipeline status to see the pipeline stages as they execute.
+    * Read more about the internals and operation of the pipeline in the document [GitHub Actions pipeline with NLU.DevOps](4-pipeline.md).
 
 1. When the pipeline has completed, the **All checks have passed** status shows as green since the CI pipeline ran and the unit tests passed. The pipeline has performed its function of a quality gate on the changes in the pull request. However, merging of the pull request is still blocked since at least 1 approving review is required by reviewers.
 
@@ -182,10 +192,11 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
 
 If you click on the **Actions** tab immediately after you merge your pull request, you will see that the full CI/CD pipeline has already been triggered and is executing by the push to master. This pipeline is the same as the one that executed for the pull request but has some important differences in operation:
 
-* It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file.
-* It runs the unit tests again against the new LUIS app version.
-* If the tests pass, it creates a GitHub release for the new version.
-* It also runs the LUIS verification tests (equivalent to using the batch testing capability in the LUIS portal).
+* It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file. The app is created if it does not already exist, such as on first run of the pipeline.
+* It runs the job **Build and Test LUIS model** which builds the new LUIS master app version and runs unit tests against it.
+* If the tests pass, it runs the **Create LUIS Release** job . This job creates a GitHub release for the new version. It is a simple example of a CD (Continuous Delivery) pipeline.
+* It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the batch testing capability in the LUIS portal). This job runs concurrently with the **Create LUIS Release** job.
+* If the pipeline fails, the repository contributors and the author of the pull request are notified by email and must determine the failing tests and resolve the code failures that caused the pipeline failure.
 
 ![CI/CD pipeline completed](images/cicdpipelinecompleted.png?raw=true "CI/CD pipeline completed")
 
@@ -205,9 +216,11 @@ You can go to the LUIS Portal to the **My apps** page, select your Azure subscri
 
 ![LUIS portal master app](images/luismasterapp.png?raw=true "LUIS portal master app")
 
+> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to find apps in the portal that have been created using Azure LUIS Authoring resources, such as the app created by this pipeline. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
+
 ### Executing predictions against the LUIS app version endpoint
 
-You can test out the new LUIS app version by sending a prediction request fro the browser. The URI format for the app version endpoint is as follows:
+You can test out the new LUIS app version by sending a prediction request from the browser. The URI format for the app version endpoint is as follows:
 
 <code>
 https://<i>{Subdomain}</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/versions/<i>{VersionId}</i>/predict?verbose=true&timezoneOffset=0&subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
@@ -220,6 +233,21 @@ In this:
 * **VersionId** - the version ID of the new version in the GitHub release.
 * **LUISSubscriptionKey** - the LUIS Prediction resource key. Get this from the Manage tab for your master LUIS app in the LUIS portal, and then go to Azure Resources. Copy the **Primary Key** shown for the Prediction Resource.
 
-When you have all the information, open a browser and paste in the complete URL with a query such as *I want my vacation to start on July 4th and to last for 10 days*. You will see the prediction response returned from the LUIS service:
+When you have all the information, open a browser and paste in the complete URL with a query such as: 
+
+* *Great now I can do devops with my LUIS apps* which should return a prediction response for the *None* intent.
+* You could also try *I want my vacation to start on July 4th and to last for 10 days* which will predict the *RequestVacation* intent.
+
+You will see the prediction response returned from the LUIS service:
 
 ![Prediction request](images/prediction.png?raw=true "Prediction request")
+
+## Further Reading
+
+See the following documents for more information on this template and the engineering practices it demonstrates:
+
+* [Project Setup and configuration](1-project-setup.md)
+
+* [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch)
+
+* [CI/CD pipeline operation](4-pipeline.md#pipeline-steps)
