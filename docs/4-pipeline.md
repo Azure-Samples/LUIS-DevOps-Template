@@ -316,7 +316,7 @@ Finally, if the pipeline is operating as a PR gate-check, the LUIS app created b
       run:  bf luis:application:delete --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --force
   ```
 
-### Job: LUIS quality testing
+### Job: LUIS F-measure testing
 
 The quality testing step only executes after the **build** step has succeeded and only if we are operating as a Merge pipeline. 
 
@@ -329,6 +329,8 @@ In the LUIS quality testing job in the CI/CD pipeline, we execute the LUIS F-mea
   * Count of true negatives for passing tests
   * Count of false positives from failing tests
   * Count of false negatives from failing tests
+
+> **Note:** The **LUIS F-measure testing** job runs concurrently with the *Create LUIS Release* job. It is provided in this template as an example of how to perform automated quality testing of a LUIS app. This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
 
 In the pipeline:
   
@@ -433,9 +435,11 @@ Finally, we upload the F measure results as a build artifact and also to Azure S
           az storage blob upload  --account-name ${{ env.AzureStorageAccountName }}  --container-name ${{ github.sha }} --name statistics.json --file statistics.json  --auth-mode login
   ```
 
-### Job: Release
+### Job: Create LUIS Release
 
 The final job in the pipeline simply publishes details of the new endpoint in a GitHub Release. This step only executes if the **build** step has completed successfully, and only if the pipeline is operating as a Merge pipeline to master.
+
+> **Note:** The **Create LUIS Release** job is a simple example of a CD (Continuous Delivery) pipeline. In  enterprise development, release procedures and practices differ from one project to another, so the implementation of this job in the pipeline is supplied in this template as an example that should be customized as required. See [Job: Release](4-pipeline.md#job-release) for more information about the operation of this job in the pipeline.
 
   ```yml
   # Job: Publishes the latest version details, from which the endpoint can be derived
@@ -505,3 +509,13 @@ From this, the endpoint URL can be determined, as follows:
 <code>
 https://<i>azureLUISPredictionResourceName</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>appId</i>/versions/<i>versionId</i>/predict?verbose=true&subscription-key=<i>predictionKey</i>&query=<i>query</i>
 </code>.
+
+## Further Reading
+
+See the following documents for more information on this template and the engineering practices it demonstrates:
+
+* [Project Setup and configuration](1-project-setup.md)
+
+* [Creating a Feature branch, updating your LUIS app, and executing the CI/CD pipelines](2-feature-branches-and-running-pipelines.md)
+
+* [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch)
