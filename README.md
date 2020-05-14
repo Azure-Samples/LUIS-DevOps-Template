@@ -26,6 +26,8 @@ Use this repository to develop a LUIS application while following DevOps enginee
 
 You can find out more about LUIS in the [Language Understanding (LUIS) documentation](https://docs.microsoft.com/azure/cognitive-services/luis/).
 
+**Important:** This repo is built to be used as a *template* to create your own repo. Please ensure that you review the [project setup instructions](./docs/1-project-setup.md) before you fork or clone.
+
 ## Contents
 
 | File/folder        | Description                                |
