@@ -1,8 +1,8 @@
 # 1. Project Setup
 
-This document shows how to create the GitHub repository, Azure resources and configuration of GitHub Actions pipelines necessary to begin developing LUIS models. The setup instructions here are the quickest and the recommended path to getting started.
+This document shows how to create the GitHub repository, Azure resources and configuration of [GitHub Actions](https://help.github.com/en/actions) pipelines necessary to begin developing LUIS models. The setup instructions here are the quickest and the recommended path to getting started.
 
-This template is pre-configured with a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](../luis-app/model.lu). The sample LUIS project defines a language understanding model to handle requests for vacation from employees. After running through the setup steps described in this document and the run through of the "dev inner loop" activities described in [2. Making updates to a LUIS app in a feature branch](2-feature-branches-and-running-pipelines.md), read [3. Customizing the Repository for your own project](3-customizing-own-project.md) for instructions on how to adapt this repository for use with your own solution.
+This template is pre-configured with a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](../luis-app/model.lu). The sample LUIS project defines a language understanding model to handle requests for vacation from employees. After running through the setup steps described in this document and the run through of the ["dev inner loop"](https://mitchdenny.com/the-inner-loop/) activities described in [2. Making updates to a LUIS app in a feature branch](2-feature-branches-and-running-pipelines.md), read [3. Customizing the Repository for your own project](3-customizing-own-project.md) for instructions on how to adapt this repository for use with your own solution.
 
 ## Table of Contents
 
@@ -10,6 +10,7 @@ In order to use this template to setup a repo for your own use, you will:
 
 - [Get the code](#get-the-code) - Create your own GitHub repository from this template
 - [Clone the repository](#clone-your-repository) to your own machine
+- [Register in the LUIS Authoring portal](#register-in-the-luis-authoring-portal)
 - [Provision Azure resources](#provisioning-azure-resources)
 - [Setup the CI/CD pipeline](#setup-the-ci/cd-pipeline)
   - [Set environment variables in the pipeline yaml](#set-environment-variables-for-resource-names-in-the-pipeline-yaml)
@@ -38,6 +39,18 @@ After your repository is created, clone it to your own machine.
 
 - Follow these steps to [clone your repository](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) to your own machine.
 
+## Register in the LUIS Authoring portal
+
+Ensure that you have logged into the [LUIS authoring portal](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions) for your chosen region using the same credentials you use to sign into Azure.
+
+Choose the LUIS authoring portal most appropriate to your location, one of:
+
+- [LUIS authoring portal](https://www.luis.ai/home)
+- [LUIS authoring portal (Europe)](https://eu.luis.ai/home)
+- [LUIS authoring portal (Australia)](https://au.luis.ai/home)
+
+> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
+
 ## Provisioning Azure resources
 
 The CI/CD pipeline and the LUIS apps require some resources in Azure to be configured:
@@ -56,7 +69,7 @@ To set up these resources, click the following button:
 <!--
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Samples%2Fmaster%2Fazuredeploy.json) -->
 
-When you click the button, it takes you to a web page in the Azure Portal where you can enter the names of the resources. Take a note of the names you enter, as you will need them in the next step when we configure the CI/CD pipeline.:
+When you click the button, you will be directed to the Azure Portal where you will need to provide unique names for the resources to be created by the template. Take a note of the names you enter for the following resources, as you will need them in the next step when we configure the CI/CD pipeline:
 
 - **Resource Group**
 - **LUIS Authoring resource name** - must be unique across Azure
@@ -65,10 +78,12 @@ When you click the button, it takes you to a web page in the Azure Portal where 
 
 ## Setup the CI/CD pipeline
 
+*If you are unfamiliar with GiHub actions then you may wish to review the [GitHub Actions documentation](https://help.github.com/actions).*
+
 The GitHub Actions CI/CD pipeline requires a few setup steps to prepare it for use. You will:
 
 - Set environment variables in the pipeline YAML file to match the resource names you created in Azure
-- Get a token for an Azure Service Principal that you will configure and which you will store in GitHub secrets
+- Get a token for an Azure Service Principal that you will configure and which you will store in [GitHub secrets](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets)
 
 ### Set Environment Variables for Resource names in the pipeline YAML
 
@@ -104,13 +119,15 @@ When you have made your edits, save them, commit the changes and push the change
    git push
    ```
 
+**Note**: If you are using a GUI tool such as Github Desktop or another client that is authenticated via OAuth you may need to use the command line for your initial *push* as your OAuth token may lack the required *scope* to create the Workflow.
+
 ### Create the Azure Service Principal
 
-You need to configure an Azure Service Principal to allow the pipeline to login using your identity and to work with Azure resources on your behalf. You will save the access token for the service principal in the GitHub Secrets for your repository.
+You need to configure an [Azure Service Principal](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli) to allow the pipeline to login using your identity and to work with Azure resources on your behalf. You will save the access token for the service principal in the GitHub Secrets for your repository.
 
 1. Install the Azure CLI on your machine, if not already installed. Follow these steps to [install the Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) on your system.
 
-1. Open a terminal window in the root folder of your cloned repository. and log into Azure:
+1. Open a Powershell or Bash terminal window in the root folder of your cloned repository. and log into Azure:
 
     ```bash
     az login
@@ -120,7 +137,7 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
 
    Otherwise, open a browser page at <https://aka.ms/devicelogin> and enter the authorization code displayed in your terminal.
 
-1. Show the selected azure subscription. If you have more than one subscription and do not have the correct subscription selected, select the right subscription with `az account set`:
+1. Show the selected azure subscription. If you have more than one subscription then you should ensure that the selected subscrption is the one in which you have created your *resource group* above. If you do not have the correct subscription selected then use the `az account set` command:
 
    ```bash
    az account show
@@ -129,7 +146,7 @@ You need to configure an Azure Service Principal to allow the pipeline to login 
 
 1. Execute the following script to create an Azure Service Principal:
 
-   > **IMPORTANT:** The Service Principal name you use must be unique within your Active Directory, so enter your own unique name for this service principal when prompted. Also enter the **Resource Group** name you created when you configured the Azure resources:
+   > **IMPORTANT:** The Service Principal name you use must be unique within your Active Directory. When prompted enter your own unique name or hit *Enter* to use an auto-generated unique name. Also enter the **Resource Group** name you created when you configured the Azure resources:
 
    If you are using `bash`:
 
@@ -164,7 +181,7 @@ Branch Protections are not required for either of these events to occur, so sett
 
 > **Important:** Branch protections are supported on public GitHub repositories, or if you have a GitHub Pro subscription. If you are using a personal GitHub account and you created your repository as a private repository, you will have to change it to be **public** if you want to configure Branch protection policies. You can change your repository to be public in repository settings.
 
-You may configure the specific branch protections you require in your own software engineering organization. In order to support the solution walkthrough described in this documentation, you will configure branch protections as follows:
+You should configure the specific workflows that you require for your software engineering organization. In order to support the solution walkthrough described in this documentation, you can configure branch protections as follows:
 
 - **master** branch is protected from direct check-ins
 - Pull request requires **1** review approval
