@@ -14,6 +14,10 @@ urlFragment: luis-devops-sample
 
 ![Flask sample MIT license badge](https://img.shields.io/badge/license-MIT-green.svg)
 
+![Preview](https://img.shields.io/github/v/release/Azure-Samples/LUIS-DevOps-Template?include_prereleases&sort=semver)
+
+> **LUIS-DevOps-Template** is currently under **public preview** and is not ready for production use.
+
 <!-- 
 Guidelines on README format: https://review.docs.microsoft.com/help/onboard/admin/samples/concepts/readme-template?branch=master
 

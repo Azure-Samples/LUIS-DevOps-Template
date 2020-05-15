@@ -1,28 +1,41 @@
 # GitHub Actions pipeline with NLU.DevOps
 
-This sample uses a [GitHub Actions workflow yaml file](../.github/workflows/luis_ci.yaml). Apart from setting the environment variables at the top of this file to match your configuration of resources in Azure, you do not need to make any changes to this file to use it in the sample.
+This solution uses two GitHub Actions workflow yaml files [luis_pr.yaml](../.github/workflows/luis_pr.yaml) and [luis_ci.yaml](../.github/workflows/luis_ci.yaml). Apart from setting the GitHub Secrets to match your configuration of resources in Azure, you do not need to make any changes to these files to use them in the solution.
 
-This document describes the pipeline steps so that you can understand how it works should you need to modify it for your own projects.
+This document describes the pipeline steps so that you can understand how they work should you need to modify them for your own projects.
 
-## Pipeline steps
+## The Pipelines
 
-The pipeline operates in two distinct modes of operation:
+The pipeline operates in response to two distinct events:
 
-* On raising of a Pull Request (PR) for changes made in a feature branch that will be merged to master
-* When a PR has been merged and the changes are pushed to master
+* On raising of a Pull Request (PR) for changes made in a feature branch that will be merged to master, pipeline [luis_pr.yaml](../.github/workflows/luis_pr.yaml) executes.
+* When a PR has been merged and the changes are pushed to master, [luis_ci.yaml](../.github/workflows/luis_ci.yaml) executes.
 
 ### Triggers
 
-When triggered for a PR, the pipeline acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the pipeline if any tests fail; this will block completion of the PR. At the end the temporary LUIS app is deleted.
+When triggered for a PR, the **luis_pr.yaml** pipeline acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the pipeline if any tests fail; this will block completion of the PR. At the end the temporary LUIS app is deleted.
 
-When triggered for a merge to master, the pipeline creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and from which the prediction endpoint URL can be determined for use in release environments. In this mode, it also runs quality tests to determine the F measure for the new model.
+When triggered for a merge to master, the **luis_ci.yaml** pipeline creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and it runs a simple CD (Continuous Deployment) job that publishes the new LUIS app version to the Production slot. It also runs quality tests to determine the F measure for the new model.
 
-The configuration ensures that the pipeline will be triggered when either the *LUIS model* or the *test suite* is changed:
+The configuration of both pipelines ensure that they will be triggered only when either the *LUIS model* or the *test suite* is changed:
+
+  ```yml
+    name: LUIS-PR
+
+    # Trigger the workflow on pull request, and only for changes to lu or json files
+    on:
+      pull_request:
+        paths:
+          - 'luis-app/*.lu'
+          - 'luis-app/Tests/*.json'
+  ```
+
+The trigger configuration for **luis_ci.yaml** ensures that it runs when a merge to master happens:
 
   ```yml
     name: LUIS-CI
 
-    # Trigger the workflow on push or pull request, but only for the master branch, and only for changes to lu or json files
+    # Trigger the workflow on push to the master branch, and only for changes to lu or json files
     on:
       push:
         branches:
@@ -30,33 +43,29 @@ The configuration ensures that the pipeline will be triggered when either the *L
         paths:
           - 'luis-app/*.lu'
           - 'luis-app/Tests/*.json'
-      pull_request:
-        paths:
-          - 'luis-app/*.lu'
-          - 'luis-app/Tests/*.json'
   ```
+
+### GitHub Secrets
+
+Both pipelines make use of a number of variables that must be defined in GitHub Secrets. Ensure each of the following secrets have been set, using the values appropriate to your configuration of resources in Azure:
+
+| Secret Name | Value |
+|-------------|-------|
+| **AZURE_CREDENTIALS** | *Service Principle token - see *[Creating the Azure Service Principal](1-project-setup.md#create-the-azure-service-principal)* |
+| **AZURE_RESOURCE_GROUP** | *name of the resource group that contains the resources below* |
+| **AZURE_LUIS_AUTHORING_RESOURCE_NAME** | *name of the Azure LUIS authoring resource* |
+| **AZURE_LUIS_PREDICTION_RESOURCE_NAME** | *name of the Azure LUIS prediction resource* |
+| **AZURE_STORAGE_ACCOUNT_NAME** | *name of the Azure storage account* |
 
 ### Environment variables
 
-The pipeline requires a number of environment variables to be defined at workflow scope:
+The pipelines also use a number of environment variables that are defined at workflow scope:
 
-* Variables for the names of the Azure resources.
 * **LUIS_MASTER_APP_NAME** Set this to the name of the LUIS app that is built from the source checked into the master branch, and which the pipeline will create when it first runs.
 * **IS_PRIVATE_REPOSITORY** Set this to `true` if your GitHub repository is private, otherwise set to `false`.
 
-You must ensure that the environment variables values match the names of the Azure resources used by this pipeline, and the name of the master LUIS app. For example:
-
 ```yml
 env:
-  # Set the Azure Resource Group name
-  AzureResourceGroup: YOUR_RESOURCE_GROUP_NAME
-  # Set the Azure LUIS Authoring Resource name
-  AzureLuisAuthoringResourceName: YOUR_LUIS_AUTHORING_RESOURCE_NAME
-  # Set the Azure LUIS Prediction Resource name
-  AzureLuisPredictionResourceName: YOUR_LUIS_PREDICTION_RESOURCE_NAME
-  # Set the Azure Storage Account name
-  AzureStorageAccountName: yourstorageaccountname
-  
   # Set the name of the master LUIS app
   LUIS_MASTER_APP_NAME: LUISDevOps-master
   # If your repository is Private, set this to true
@@ -80,13 +89,17 @@ The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your 
 
 ### Job: Build
 
-The pipeline is divided into three discrete jobs. Each job runs independently but sequentially in its own environment and the pipeline is configured so that the **build** job executes first, followed by the **LUIS_quality_testing** job and the **release** job.
+The **[luis_ci.yaml](../.github/workflows/luis_ci.yaml)** pipeline is divided into three discrete jobs. Each job runs independently but sequentially in its own environment and the pipeline is configured so that the **build** job executes first, followed by the **LUIS_quality_testing** job and the **release** job.
+The **[luis_pr.yaml](../.github/workflows/luis_pr.yaml)** pipeline is a single job that is almost identical to the first job of the **luis_ci.yaml** pipeline, but with these distinct differences:
+
+* *luis_pr.yaml* creates a temporary LUIS app from the source in the PR that acts as the test target and is deleted again at the end of the run
+* *luis_ci.yaml* creates a new version in the LUIS app for the master branch from the merged source in master which is not deleted at the end of the run. 
 
 The first job builds and unit tests the LUIS model.
 
 #### Checking out the code and bump Version
 
-It starts by checking out the code and then fetching all the history and tags for all branches, information that is required by the [GitVersion](https://gitversion.net/docs/) step which increments the version number using semantic versioning on every build:
+**luis_ci.yaml** starts by checking out the code and then fetching all the history and tags for all branches, information that is required by the [GitVersion](https://gitversion.net/docs/) step which increments the version number using semantic versioning on every build:
 
 ```yml
   build:
@@ -105,10 +118,13 @@ It starts by checking out the code and then fetching all the history and tags fo
       git config remote.origin.url https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
       git fetch --prune --unshallow
 
-  - name: GitVersion
-    uses: docker://gittools/gitversion:5.2.5-linux-ubuntu-16.04-netcoreapp2.1
+  - name: Install GitVersion
+    uses: gittools/actions/gitversion/setup@v0.9.3
     with:
-      args: /github/workspace /nofetch /output buildserver
+        versionSpec: '5.2.x'
+  - name: Use GitVersion
+    id: gitversion
+    uses: gittools/actions/gitversion/execute@v0.9.3
 
   - name: luisAppVersion env
     run: echo "::set-env name=luisAppVersion::$GitVersion_SemVer"
@@ -125,13 +141,15 @@ We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets 
 
     - name: Get LUIS authoring key
       run: |
-          az cognitiveservices account keys list --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "key1" | \
-          xargs -I {} echo "::set-env name=LUISAuthoringKey::{}"
+         keya=$(az cognitiveservices account keys list --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "key1" | xargs)
+         echo "::set-env name=LUISAuthoringKey::$keya"
+         echo "::add-mask::$keya"
 
     - name: Get LUIS prediction key
       run: |
-          az cognitiveservices account keys list --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "key1" | \
-          xargs -I {} echo "::set-env name=LUISPredictionKey::{}"
+         keyp=$(az cognitiveservices account keys list --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "key1" | xargs)
+         echo "::set-env name=LUISPredictionKey::$keyp"
+         echo "::add-mask::$keyp"
 
     - name: Get LUIS authoring endpoint
       run: |
@@ -171,23 +189,21 @@ The first step transforms the ludown file to a LUIS JSON file using the botframe
 
 The `model.json` file output must be imported to LUIS. This happens in different ways depending on whether the pipeline is operating as a PR gate-check - where it creates a new LUIS app for testing which is deleted at the end of the pipeline - or if operating as a Merge pipeline.
 
-If the pipeline is operating as a PR gate, it creates a new app. `bf luis:application:import` returns a string with the LUIS App ID that we will need to use in the next steps, so we save the AppId in an environment variable called *AppId*:
+The *luis_pr.yaml* pipeline is operating as a PR quality gate and it creates a temporary app to use as the test target. `bf luis:application:import` returns a string with the LUIS App ID that we will need to use in the next steps, so we save the AppId in an environment variable called *LUISAppId*:
 
   ```yml
     # When doing a gate check on PRs, we build a new LUIS application for testing that is later deleted
-    - name: Create PR check LUIS application
-      if: github.event_name == 'pull_request'
+    - name: Create PR check LUIS application 
       run: |
-        importResult=`bf luis:application:import --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }}  --in model.json`
-        echo "::set-env name=AppId::$(echo $(echo $importResult | cut -b 35-70))"
+        bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json | \
+        jq '.id' | xargs -I {} echo "::set-env name=LUISAppId::{}"
   ```
 
-If operating as a Merge pipeline, the LUIS app is the one associated with the master branch and we use the name specfied in the YAML file. The app will be created if it does not already exist. This step determines the AppId (GUID) and saves it in the *AppId* environment variable:
+*luis_ci.yaml* is operating as a Merge pipeline, so the LUIS app is the one associated with the master branch and we use the name specified in the YAML file. The app will be created if it does not already exist. This step determines the AppId (GUID) and saves it in the *AppId* environment variable:
 
   ```yml
     # When doing a merge to master, use the master LUIS app - create if necessary (soft fails if exists)
     - name: Get master LUIS application ID
-      if: github.event_name == 'push'
       run: |
         bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint --versionId=0.1
         bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
@@ -214,17 +230,17 @@ Then we go ahead and create a new version in the LUIS app by importing the JSON 
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application
     - name: Create new LUIS application version
       if: github.event_name == 'push'
-      run: bf luis:version:import --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --in model.json
+      run: bf luis:version:import --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey --in model.json
   ```
 
 #### Train and publish the LUIS app
 
-The BF CLI is used to initiate the training of the model and to *wait* for this to complete. You should be aware that Github Actions have a limit on [*Job* and *Workflow* runtime](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions) of 6hr and 72hr respectively. It is unlikely that your model training will hit these limits.
+The BF CLI is used to initiate the training of the model and to *wait* for this to complete.
 
   ```yml
     - name: Train luis
       shell: bash
-      run: bf luis:train:run --appId $AppId --versionId $luisAppVersion --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --wait
+      run: bf luis:train:run --appId $LUISAppId --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --wait
   ```
 
 After the model has finished training we can publish our LUIS model. We use *direct version publishing* for this rather than publishing to the named slots, staging and production. We do this to be able to support more than two published versions at any one time so that multiple LUIS app versions can be in a published state at any one time to support more then two dev environments simultaneously (for example, DEV, QA, UAT, PRODUCTION. We use a cURL command here to call the REST API directly:
@@ -269,10 +285,10 @@ In order to test a LUIS app, you must use an Azure LUIS Prediction resource key.
         curl POST $POSTurl \
         -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
         -H "Content-Type: application/json" \
-        -H "Ocp-Apim-Subscription-Key: ${{ env.LUISAuthoringKey }}" \
-        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '$AzureResourceGroup', 'AccountName': '$AzureLuisPredictionResourceName' }"
+        -H "Ocp-Apim-Subscription-Key: $LUISAuthoringKey" \
+        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '${{ secrets.AZURE_RESOURCE_GROUP }}', 'AccountName': '${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }}' }"
       env:
-        POSTurl: ${{ env.luisAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.AppId }}/azureaccounts
+        POSTurl: ${{ env.LUISAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.LUISAppId }}/azureaccounts
 
   ```
 
@@ -282,11 +298,11 @@ To test the LUIS app version that was created, we use the unit test file:
     - name: Test Luis model
       run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
       env:
-        luisAppId: ${{ env.AppId }}
-        luisVersionId: ${{ env.luisAppVersion }}
+        luisAppId: ${{ env.LUISAppId }}
+        luisVersionId: ${{ env.LUISAppVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ env.LUISPredictionKey }}
-        luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
+        luisPredictionResourceName: ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }}
   ```
 
 To evaluate results we use two files: the *unit test file* that consists of test utterances and the expected intents and entities results and `results.json` file which was created by the Test LUIS model step and contains the actual results returned from testing the LUIS model:
@@ -306,7 +322,7 @@ We archive the test results as a build pipeline artifact:
         path: unittest/TestResult.xml
   ```
 
-Finally, if the pipeline is operating as a PR gate-check, the LUIS app created by this pipeline is deleted:
+In *luis_pr.yaml* where the pipeline is operating as a PR gate-check, at this point the LUIS app created by this pipeline is deleted:
 
   ```yml
       # Delete the LUIS app again if we are executing as gate check on a PR
@@ -316,11 +332,55 @@ Finally, if the pipeline is operating as a PR gate-check, the LUIS app created b
       run:  bf luis:application:delete --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --force
   ```
 
+For *luis_ci.yaml* there is still some work to do. It creates a GitHub Release, which also tags the repo using the version Id:
+
+  ```yml
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ env.LUISAppVersion }}
+        release_name: Release ${{ env.LUISAppVersion }}
+        body: |
+          Releasing new LUIS endpoint
+        draft: false
+        prerelease: false
+  ```
+
+  Finally, it uploads the version details as a Release asset:
+
+  ```yml
+    - name: Get LUIS latest version details file
+      run: |
+        bf luis:version:list --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --take 1 --out luis_latest_version.json
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`
+        asset_path: ./luis_latest_version.json
+        asset_name: luis_latest_version.json
+        asset_content_type: application/json
+  ```
+
+A *Release Manager* can determine the version Id of the LUIS app by examining the **luis_latest_version.json** file uploaded as the Release artifact which they can find by going to the Releases page for their GitHub repository.
+
+From this, the endpoint URL can be determined, as follows:
+
+<code>
+https://<i>azureLUISPredictionResourceName</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>appId</i>/versions/<i>versionId</i>/predict?verbose=true&subscription-key=<i>predictionKey</i>&query=<i>query</i>
+</code>.
+
 ### Job: LUIS F-measure testing
 
-The quality testing step only executes after the **build** step has succeeded and only if we are operating as a Merge pipeline. 
+The quality testing step only executes after the **build** step has succeeded and only in **luis_ci.yaml** which is operating as a Merge pipeline.
 
-Also note that the `BASELINE_CONTAINER_NAME` environment variable needs to be set at the top of the luis_ci.yaml in order to enable comparisonws with previous model training runs. This variable should be an Azure blob container name which is then used to store the baseline set of test results that we will use to compare our newly built model against. Leaving this environment variable blank will skip the comparison stage.
+Also note that the `BASELINE_CONTAINER_NAME` GitHub Secret needs to be defined in order to enable comparisons with previous model training runs. This variable should be the name of the Azure blob container which is then used to store the baseline set of test results that we will use to compare our newly built model against. Leaving this GitHub Secret undefined will skip the comparison stage.
 
 In the LUIS quality testing job in the CI/CD pipeline, we execute the LUIS F-measure tests using the [LUIS batch API](https://docs.microsoft.com/en-us/azure/cognitive-services/LUIS/luis-how-to-batch-test) via NLU.DevOps to calculate the F-measure and to produce the test results file, which contains:
 
@@ -437,17 +497,16 @@ Finally, we upload the F measure results as a build artifact and also to Azure S
 
 ### Job: Create LUIS Release
 
-The final job in the pipeline simply publishes details of the new endpoint in a GitHub Release. This step only executes if the **build** step has completed successfully, and only if the pipeline is operating as a Merge pipeline to master.
+This step only executes if the *build* step has completed successfully and only within **luis_ci.yaml** which is operating as a Merge pipeline to master.
 
-> **Note:** The **Create LUIS Release** job is a simple example of a CD (Continuous Delivery) pipeline. In  enterprise development, release procedures and practices differ from one project to another, so the implementation of this job in the pipeline is supplied in this template as an example that should be customized as required. See [Job: Release](4-pipeline.md#job-release) for more information about the operation of this job in the pipeline.
+> **Note:** The **Create LUIS Release** job is a simple example of a CD (Continuous Delivery) pipeline. In  enterprise development, release procedures and practices differ from one project to another, so the implementation of this job in the pipeline is supplied in this template as an example that should be customized as required. 
 
   ```yml
-  # Job: Publishes the latest version details, from which the endpoint can be derived
+  # Job: Continuous deployment job for LUIS
   release:
-    name: Create LUIS Release
-    runs-on: ubuntu-latest
+    name: LUIS CD
     needs: build
-    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
   ```
 
@@ -458,57 +517,27 @@ These steps determine the version Id of the model built by the **build** step:
   ```yml
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
+        bf luis:application:list --subscriptionKey $LUISAuthoringKey --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
-        xargs -I {} echo "::set-env name=AppId::{}"
-        echo "Found LUIS app: $AppId"
+        xargs -I {} echo "::set-env name=LUISAppId::{}"
+        echo "Found LUIS app: $LUISAppId"
 
     - name: Get LUIS latest version ID
       run: |
-        bf luis:version:list --appId $AppId --endpoint $luisAuthoringEndpoint --subscriptionKey ${{ env.LUISAuthoringKey }} --take 1 --out luis_latest_version.json
+        bf luis:version:list --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey --take 1 --out luis_latest_version.json
         cat luis_latest_version.json | jq '.[0].version' | \
-        xargs -I {} echo "::set-env name=LuisVersion::{}"
+        xargs -I {} echo "::set-env name=LUISAppVersion::{}"
   ```
 
-Then it creates a GitHub Release, which also tags the repo using the version Id:
+Then this job publishes the LUIS app version to the [Production endpoint](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-publish-app):
 
-  ```yml
-      - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-      with:
-        tag_name: ${{ env.LuisVersion }}
-        release_name: Release ${{ env.LuisVersion }}
-        body: |
-          Releasing new LUIS endpoint
-        draft: false
-        prerelease: false
-  ```
+```yml
 
-  Finally, it uploads the version details as a Release asset:
+    - name: Publish LUIS to PRODUCTION
+      run: bf luis:application:publish --appId $LUISAppId --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
+```
 
-  ```yml
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`.
-        asset_path: ./luis_latest_version.json
-        asset_name: luis_latest_version.json
-        asset_content_type: application/json
-  ```
-
-A *Release Manager* can determine the version Id of the LUIS app by examining the **luis_latest_version.json** file uploaded as the Release artifact which they can find by going to the Releases page for their GitHub repository.
-
-From this, the endpoint URL can be determined, as follows:
-
-<code>
-https://<i>azureLUISPredictionResourceName</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>appId</i>/versions/<i>versionId</i>/predict?verbose=true&subscription-key=<i>predictionKey</i>&query=<i>query</i>
-</code>.
+There are many possible deployment strategies and you should implement the functions required by your project at this step.
 
 ## Further Reading
 

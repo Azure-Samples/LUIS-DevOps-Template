@@ -82,91 +82,64 @@ When you click the button, you will be directed to the Azure Portal where you wi
 
 The GitHub Actions CI/CD pipeline requires a few setup steps to prepare it for use. You will:
 
-- Set environment variables in the pipeline YAML file to match the resource names you created in Azure
-- Get a token for an Azure Service Principal that you will configure and which you will store in [GitHub secrets](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets)
+- Set [GitHub secrets](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets) for each of the resource names you created in Azure
+- Get a token for an Azure Service Principal that you will configure and which you will store in **GitHub secrets**.
 
-### Set Environment Variables for Resource names in the pipeline YAML
+### Set GitHub Secrets
 
-The CI/CD pipeline is defined in the **luis_ci.yaml** file in the **/.github/workflows** folder in your cloned repository. At the top of this file, a number of environment variables are defined:
+GitHub Secrets serve as parameters to the workflow, while also hiding secret values. When viewing the logs for a workflow on GitHub, secrets will appear as `***`.
 
-- variables for the names of the Azure resources
-- **LUIS_MASTER_APP_NAME** environment variable defines the name of the LUIS app that is built from the source checked into the master branch, and which the pipeline will create when it first runs.
+You access GitHub Secrets by clicking on the **Settings** tab on the home page of your repository, or by going to `https://github.com/{your-GitHub-Id}/{your-repository}/settings`. Then click on **Secrets** in the **Options** menu, which brings up the UI for entering Secrets, like this:
 
-Edit the **luis_ci.yaml** file and change the environment variables to match the names of the Azure resources you defined earlier. You can also change the name of the master LUIS app specified in the **LUIS_MASTER_APP_NAME** variable, if you wish. Also, set the **IS_PRIVATE_REPOSITORY** value to `true` if your repository is private. For example:
+![GitHub Secrets](./images/gitHubSecretsAzure.png?raw=true "Saving in GitHub Secrets")
 
-```yml
-env:
-  # Set the Azure Resource Group name
-  AzureResourceGroup: YOUR_RESOURCE_GROUP_NAME
-  # Set the Azure LUIS Authoring Resource name
-  AzureLuisAuthoringResourceName: YOUR_LUIS_AUTHORING_RESOURCE_NAME
-  # Set the Azure LUIS Prediction Resource name
-  AzureLuisPredictionResourceName: YOUR_LUIS_PREDICTION_RESOURCE_NAME
-  # Set the Azure Storage Account name
-  AzureStorageAccountName: yourstorageaccountname
-  
-  # Set the name of the master LUIS app
-  LUIS_MASTER_APP_NAME: LUISDevOps-master
-  # If your repository is Private, set this to true
-  IS_PRIVATE_REPOSITORY: false
-```
+Ensure each of the following secrets have been set, using the values you entered when you went through the **Deploy to Azure** dialog:
 
-When you have made your edits, save them, commit the changes and push the changes up to update the repository:
-
-   ```bash
-   git add .
-   git commit -m "Updated parameters"
-   git push
-   ```
-
-**Note**: If you are using a GUI tool such as Github Desktop or another client that is authenticated via OAuth you may need to use the command line for your initial *push* as your OAuth token may lack the required *scope* to create the Workflow.
+| Secret Name | Value |
+|-------------|-------|
+| **AZURE_RESOURCE_GROUP** | *name of the resource group* |
+| **AZURE_LUIS_AUTHORING_RESOURCE_NAME** | *name of the Azure LUIS authoring resource* |
+| **AZURE_LUIS_PREDICTION_RESOURCE_NAME** | *name of the Azure LUIS prediction resource* |
+| **AZURE_STORAGE_ACCOUNT_NAME** | *name of the Azure storage account* |
 
 ### Create the Azure Service Principal
 
 You need to configure an [Azure Service Principal](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli) to allow the pipeline to login using your identity and to work with Azure resources on your behalf. You will save the access token for the service principal in the GitHub Secrets for your repository.
 
-1. Install the Azure CLI on your machine, if not already installed. Follow these steps to [install the Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) on your system.
+A Powershell script [./setup/create_sp.ps1](./setup/create_sp.ps1) is provided in this repo to make this simple and the easiest way to run the script is to use [Azure Cloud Shell](https://shell.azure.com).
 
-1. Open a Powershell or Bash terminal window in the root folder of your cloned repository. and log into Azure:
+To launch Azure Cloud Shell:
 
-    ```bash
-    az login
-    ```
+- Go to [https://shell.azure.com](https://shell.azure.com), or click  this button to open Cloud Shell in your browser: [![Launch Cloud Shell in a new window](media/cloud-shell-try-it/hdi-launch-cloud-shell.png)](https://shell.azure.com)
+- Or select the **Cloud Shell** button on the menu bar at the upper right in the [Azure portal](https://portal.azure.com).
 
-   If the CLI can open your default browser, it will do so and load an Azure sign-in page. Sign in with your account credentials in the browser.
+When Cloud shell launches, select the Azure subscription you used before to create the Azure resources, and if this is the first time of use, complete the initialization procedure.
 
-   Otherwise, open a browser page at <https://aka.ms/devicelogin> and enter the authorization code displayed in your terminal.
+To run the script:
 
-1. Show the selected azure subscription. If you have more than one subscription then you should ensure that the selected subscrption is the one in which you have created your *resource group* above. If you do not have the correct subscription selected then use the `az account set` command:
+1. Select **Powershell** at the top left of the terminal taskbar.
 
-   ```bash
-   az account show
-   az account set -s {Name or ID of subscription}
-   ```
+1. Click the **Upload/Download** button on the taskbar.
 
-1. Execute the following script to create an Azure Service Principal:
+   ![Azure CloudShell Upload button](./images/cloudshell.png?raw=true "Uploading in Azure Cloud Shell")
 
-   > **IMPORTANT:** The Service Principal name you use must be unique within your Active Directory. When prompted enter your own unique name or hit *Enter* to use an auto-generated unique name. Also enter the **Resource Group** name you created when you configured the Azure resources:
+1. Click **Upload** and navigate to the **/setup/create_sp.ps1** file in the cloned copy of this repo on your computer.
 
-   If you are using `bash`:
-
-   ```bash
-   ./setup/create_sp.sh
-   ```
-
-   If you are using `Powershell`:
+1. After the file has finished uploading, execute it:
 
    ```powershell
-   ./setup/create_sp.ps1
+   ./create_sp.ps1
    ```
+
+1. Enter the  requested input as prompted.
+
+   > **IMPORTANT:** The Service Principal name you use must be unique within your Active Directory. When prompted enter your own unique name or hit *Enter* to use an auto-generated unique name. Also enter the **Resource Group** name you created when you configured the Azure resources:
 
    ![Azure create-for-rbac](./images/rbac.png?raw=true "Saving output from az ad sp create-for-rbac")
 
 1. As prompted, copy the JSON that is returned, then in your repository, create a **GitHub secret** named **AZURE_CREDENTIALS** and paste the JSON in as the value.
 
-   You access GitHub Secrets by clicking on the **Settings** tab on the home page of your repository, or by going to `https://github.com/{your-GitHub-Id}/{your-repository}/settings`. Then click on **Secrets** in the **Options** menu, which brings up the UI for entering Secrets, like this:
-
-   ![GitHub Secrets](./images/gitHubSecretsAzure.png?raw=true "Saving in GitHub Secrets")
+![GitHub Secrets](./images/githubsecretsall.png?raw=true "Saving variables in GitHub Secrets")
 
 ## Protecting the master branch
 

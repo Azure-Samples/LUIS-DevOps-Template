@@ -111,16 +111,16 @@ You need to enter settings for the test target LUIS app - the app you have just 
 {
   "luisAppId": "***your LUIS App Id***",
   "luisEndpointKey": "****your LUIS endpoint key***",
-  "luisEndpointRegion": "***region***",
+  "luisPredictionResourceName": "***your LUIS prediction resource name***",
   "luisIsStaging": true
 }
 ```
 
-* You can find the **LUIS App Id** for your app by clicking the **Manage** tab in the LUIS Portal. The App ID is shown on the **Application Settings** page.
+* You can find the **LUIS App Id** for your app by clicking the **Manage** tab in the LUIS Portal. The App ID is shown on the **Application Information** page.
 
-* To get the **luisEndpointKey** value, go to the **Azure Resources** page on the **Manage** tab in the LUIS Portal and copy the **Primary Key**.
+* To get the **luisEndpointKey** value, go to the **Azure Resources** page on the **Manage** tab in the LUIS Portal, click on the **Prediction resources** tab and copy the **Primary Key** of your Azure *prediction resource*.
 
-* To get the **luisEndpointRegion**, take the **Location** shown on the **Azure Resources** page, one of *westus*, *westeurope* or *australiaeast*.
+* To get the **luisPredictionResourceName**, enter the name of your prediction resource, for example **LUISDevOpsResource-Prediction**.
 
 * Save this file.
 
@@ -196,11 +196,11 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
 
 ## Running the CI/CD pipeline
 
-If you click on the **Actions** tab immediately after you merge your pull request, you will see that the full CI/CD pipeline has already been triggered and is executing by the push to master. This pipeline is the same as the one that executed for the pull request but has some important differences in operation:
+If you click on the **Actions** tab immediately after you merge your pull request, you will see that the full CI/CD pipeline has already been triggered and is executing by the push to master. The first job of this pipeline is similar to the one that executed for the pull request, but it has some important differences in operation:
 
 * It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file. The app is created if it does not already exist, such as on first run of the pipeline.
-* It runs the job **Build and Test LUIS model** which builds the new LUIS master app version and runs unit tests against it.
-* If the tests pass, it runs the **Create LUIS Release** job . This job creates a GitHub release for the new version. It is a simple example of a CD (Continuous Delivery) pipeline.
+* It runs the job **LUIS Build and Test** which builds the new LUIS master app version and runs unit tests against it and if the tests pass it creates a GitHub release for the new version.
+* If the *LUIS Build and Test* job completes successfully, it runs the **LUIS CD** job . This job publishes the app version to the [Production endpoint](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-publish-app). It is a simple example of a CD (Continuous Delivery) pipeline.
 * It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the batch testing capability in the LUIS portal). This job runs concurrently with the **Create LUIS Release** job.
 * If the pipeline fails, the repository contributors and the author of the pull request are notified by email and must determine the failing tests and resolve the code failures that caused the pipeline failure.
 
@@ -229,14 +229,13 @@ You can go to the LUIS Portal to the **My apps** page, select your Azure subscri
 You can test out the new LUIS app version by sending a prediction request from the browser. The URI format for the app version endpoint is as follows:
 
 <code>
-https://<i>{Subdomain}</i>.cognitiveservices.azure.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/versions/<i>{VersionId}</i>/predict?verbose=true&timezoneOffset=0&subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
+https://<i>{Subdomain}</i>.api.cognitive.microsoft.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/slots/production/predict?subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
 </code>
 
 In this:
 
 * **Subdomain** - Use the prediction resource name. For example, the endpoint URL for a prediction resource called *luisdevops-prediction* will be `https://luisdevops-prediction.cognitiveservices.azure.com`.
 * **AppId** - the LUIS application ID. Get this by signing into the LUIS portal, finding your LUIS app for the master branch and goto the **Manage** tab
-* **VersionId** - the version ID of the new version in the GitHub release.
 * **LUISSubscriptionKey** - the LUIS Prediction resource key. Get this from the Manage tab for your master LUIS app in the LUIS portal, and then go to Azure Resources. Copy the **Primary Key** shown for the Prediction Resource.
 
 When you have all the information, open a browser and paste in the complete URL with a query such as: 
