@@ -20,18 +20,18 @@ This document explains how to run through these steps. Note that all steps invol
 
 You will be performing the following steps to make updates to the LUIS app:
 
-- [2. Making updates to a LUIS app in a feature branch](#2-making-updates-to-a-luis-app-in-a-feature-branch)
-  - [Installing the required command line tools](#installing-the-required-command-line-tools)
-  - [Creating a feature branch](#creating-a-feature-branch)
-  - [Make your LUIS app updates](#make-your-luis-app-updates)
-    - [Update the LUIS app using the LUIS Portal](#update-the-luis-app-using-the-luis-portal)
-  - [Testing the new LUIS model](#testing-the-new-luis-model)
-    - [Setting up for testing](#setting-up-for-testing)
-    - [Testing the LUIS app](#testing-the-luis-app)
-  - [Raising the pull request](#raising-the-pull-request)
-  - [Running the CI/CD pipeline](#running-the-cicd-pipeline)
-    - [Verifying the new LUIS master app version](#verifying-the-new-luis-master-app-version)
-    - [Executing predictions against the LUIS app version endpoint](#executing-predictions-against-the-luis-app-version-endpoint)
+* [Making updates to a LUIS app in a feature branch](#2-making-updates-to-a-luis-app-in-a-feature-branch)
+  * [Installing the required command line tools](#installing-the-required-command-line-tools)
+  * [Creating a feature branch](#creating-a-feature-branch)
+  * [Make your LUIS app updates](#make-your-luis-app-updates)
+    * [Update the LUIS app using the LUIS Portal](#update-the-luis-app-using-the-luis-portal)
+  * [Testing the new LUIS model](#testing-the-new-luis-model)
+    * [Setting up for testing](#setting-up-for-testing)
+    * [Testing the LUIS app](#testing-the-luis-app)
+  * [Raising the pull request](#raising-the-pull-request)
+  * [Running the CI/CD pipeline](#running-the-cicd-pipeline)
+    * [Verifying the new LUIS master app version](#verifying-the-new-luis-master-app-version)
+    * [Executing predictions against the LUIS app version endpoint](#executing-predictions-against-the-luis-app-version-endpoint)
 
 ## Installing the required command line tools
 
@@ -72,7 +72,7 @@ To make updates using the LUIS Portal:
    * LUIS authoring portal (Europe) - [https://eu.luis.ai](https://eu.luis.ai/home)
    * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)
 
-> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
+   > **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
    ![Select Authoring Resource](images/LUIS_portal_authoring_resource.png?raw=true "Import as LU")
 
