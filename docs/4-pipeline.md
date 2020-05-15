@@ -116,7 +116,7 @@ It starts by checking out the code and then fetching all the history and tags fo
 
 #### Log into Azure
 
-We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring key, prediction key and authoring endpoint that are needed later on:
+We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring key, prediction key and authoring endpoint that are needed later on. We use the add-mask function to mask sensitive keys to ensure they are hidden in the log files:
 
 ```yml
     - uses: azure/login@v1
@@ -125,13 +125,15 @@ We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets 
 
     - name: Get LUIS authoring key
       run: |
-          az cognitiveservices account keys list --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "key1" | \
-          xargs -I {} echo "::set-env name=LUISAuthoringKey::{}"
+         keya=$(az cognitiveservices account keys list --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "key1" | xargs)
+         echo "::set-env name=LUISAuthoringKey::$keya"
+         echo "::add-mask::$keya"
 
     - name: Get LUIS prediction key
       run: |
-          az cognitiveservices account keys list --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "key1" | \
-          xargs -I {} echo "::set-env name=LUISPredictionKey::{}"
+         keyp=$(az cognitiveservices account keys list --name $AzureLuisPredictionResourceName --resource-group $AzureResourceGroup --query "key1" | xargs)
+         echo "::set-env name=LUISPredictionKey::$keyp"
+         echo "::add-mask::$keyp"
 
     - name: Get LUIS authoring endpoint
       run: |
