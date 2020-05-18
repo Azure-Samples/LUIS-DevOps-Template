@@ -69,7 +69,23 @@ jobs:
         jq '.id' | xargs -I {} echo "::set-env name=LUISAppId::{}"
         
     - name: Train luis
-      run: bf luis:train:run --appId $LUISAppId --versionId 0.1 --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey --wait
+      run: bf luis:train:run --appId $LUISAppId --versionId 0.1 --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
+
+    - name: Wait for train
+      run: |
+        while true
+        do 
+          status=`bf luis:version:list --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey |  jq '.[] | select(.version == "0.1") | .trainingStatus' | xargs`
+          if [ "$status" == "Trained" ]
+          then
+            break
+          elif [ "$status" == "Failed" ]
+          then
+            exit 1
+          fi
+          echo 'sleep 10'
+          sleep 10
+        done 
 
     - name: Publish luis
       run: bf luis:application:publish --appId $LUISAppId --versionId 0.1 --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
