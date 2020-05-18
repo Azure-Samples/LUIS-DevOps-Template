@@ -132,7 +132,7 @@ The first job builds and unit tests the LUIS model.
 
 #### Log into Azure
 
-We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring key, prediction key and authoring endpoint that are needed later on:
+We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets during setup, and query for the LUIS authoring key, prediction key and authoring endpoint that are needed later on. We use the add-mask function to mask sensitive keys to ensure they are hidden in the log files:
 
 ```yml
     - uses: azure/login@v1
