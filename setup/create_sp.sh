@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 # Get the Service Principal name
 SP_DEFAULT="myLUISDevOpsApp-$RANDOM"
 read -p "Enter the Service Principal name [$SP_DEFAULT]: " spname
