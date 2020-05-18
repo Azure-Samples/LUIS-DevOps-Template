@@ -55,7 +55,6 @@ You can find out more about LUIS in the [Language Understanding (LUIS) documenta
   - [LUIS authoring account](https://www.luis.ai/home)
   - [LUIS authoring account (Europe)](https://eu.luis.ai/home)
   - [LUIS authoring account (Australia)](https://au.luis.ai/home)
-- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 ## How to use this template repository
 

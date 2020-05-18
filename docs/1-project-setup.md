@@ -63,11 +63,7 @@ The CI/CD pipeline and the LUIS apps require some resources in Azure to be confi
 
 To set up these resources, click the following button:
 
-> **TEMPORARY:** URL behind this button is temporary while the repo is private. REMOVE THIS MESSAGE and change URL to correct target when this goes public.
-
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdaltskin%2FNLP-DevOps%2Fmaster%2Fazuredeploy.json)
-<!--
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Samples%2Fmaster%2Fazuredeploy.json) -->
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2FLUIS-DevOps-Template%2Fmaster%2Fazuredeploy.json)
 
 When you click the button, you will be directed to the Azure Portal where you will need to provide unique names for the resources to be created by the template. Take a note of the names you enter for the following resources, as you will need them in the next step when we configure the CI/CD pipeline:
 
@@ -97,10 +93,10 @@ Ensure each of the following secrets have been set, using the values you entered
 
 | Secret Name | Value |
 |-------------|-------|
-| **AZURE_RESOURCE_GROUP** | *name of the resource group* |
-| **AZURE_LUIS_AUTHORING_RESOURCE_NAME** | *name of the Azure LUIS authoring resource* |
-| **AZURE_LUIS_PREDICTION_RESOURCE_NAME** | *name of the Azure LUIS prediction resource* |
-| **AZURE_STORAGE_ACCOUNT_NAME** | *name of the Azure storage account* |
+| **AZURE_RESOURCE_GROUP** | Azure resource group name |
+| **AZURE_LUIS_AUTHORING_RESOURCE_NAME** | Azure LUIS authoring resource name |
+| **AZURE_LUIS_PREDICTION_RESOURCE_NAME** | Azure LUIS prediction resource name |
+| **AZURE_STORAGE_ACCOUNT_NAME** | Azure storage account name |
 
 ### Create the Azure Service Principal
 
@@ -177,6 +173,8 @@ To configure these protections:
       ![Branch protection add rule](./images/branch_protection_rule.png?raw=true "Configuring branch protection rule")
 
    1. Click the **Create** button at the bottom of the page
+
+> **Note:** Although you have checked **Require status checks to pass before merging** and the *luis_pr.yaml* pipeline will run in response to the raising of a PR, it is still not a hard requirement that the pipeline should complete successfully before the PR can be merged. To make it a hard requirement, return to this configuration after the *luis_pr* pipeline has run at least once and then you will be able to check the *Build and Test LUIS model (PR)* status check which will make successful completion a hard requirement.
 
 ## Updating the LUIS app in a feature branch
 

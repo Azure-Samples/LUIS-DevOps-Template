@@ -74,17 +74,17 @@ To make updates using the LUIS Portal:
 
    > **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
-   ![Select Authoring Resource](images/LUIS_portal_authoring_resource.png?raw=true "Import as LU")
+1. Select the Azure subscription and the authoring resource you want to use while you are working in the feature branch (note that this does not have to be the same subscription and/or authoring resource that you configured for the pipelines):
+
+   ![Select Authoring Resource](images/LUIS_portal_authoring_resource.png?raw=true "Select authoring resource")
 
 1. You will now create a LUIS app that you will use just for the work in this feature branch:
 
-   1. First convert the **model.lu** file to JSON format using the Bot Framework CLI and save it to the same folder (**Note:** *luis-app/model.json* has already been added to the .gitignore file for this repository so that it will be considered as a transient file and will not be tracked by git):  
-   `$ bf luis:convert -i luis-app/model.lu -o luis-app/model.json`
+   1. Click **New app for conversation**. In the dropdown, click **Import as LU**.
 
-   1. Click **New app for conversation**. In the dropdown, click **Import as JSON**.
    ![Import as LU](images/importaslu.png?raw=true "Import as LU")
 
-   1. Select the **model.json** file in the *Import new app* dialog, set a suitable  name for the app such as **DEV-update-luis-sample** and click **Done**.
+   1. Select the **/luis-app/model.lu** file in this repo in the *Import new app* dialog, set a suitable name for the app such as **DEV-update-luis-sample** and click **Done**.
 
 1. Now you can make your changes to the app. For the purposes of this sample, you will add a new training utterance to the **None** intent.
    1. From the **Intents** editor, click on the **None** intent.
@@ -218,7 +218,11 @@ When you click on this release flag, you can see the details of the new release,
 
 ![GitHub Release Details](images/releasedetails.png?raw=true "GitHub Release Details")
 
-You can go to the LUIS Portal to the **My apps** page, select your Azure subscription and the LUIS authoring resource you are using for this sample and you will see the LUIS app that the pipeline has created. If you open that app and go to the **Manage** tab, and then to **Versions**, you can see the LUIS app version that the pipeline has built and tested.
+To view the LUIS app version that the pipeline has created:
+
+1. Go to the LUIS Portal to the **My apps** page, select your Azure subscription and the LUIS authoring resource you configured for the pipeline during [Provisioning Azure resources](1-project-setup.md#provisioning-azure-resources) while setting up this solution.
+1. You will see the **LUISDevOps-master** app that the pipeline has created. This name of this app is defined in the [Environment variables](4-pipeline.md#environment-variables) at the top of *luis_ci.yaml*.
+1. Select the **LUISDevOps-master** app and go to the **Manage** tab, and then to **Versions**, you can see the LUIS app version that the pipeline has built and tested.
 
 ![LUIS portal master app](images/luismasterapp.png?raw=true "LUIS portal master app")
 
@@ -226,26 +230,18 @@ You can go to the LUIS Portal to the **My apps** page, select your Azure subscri
 
 ### Executing predictions against the LUIS app version endpoint
 
-You can test out the new LUIS app version by sending a prediction request from the browser. The URI format for the app version endpoint is as follows:
+You can test out the new LUIS app version by sending a prediction request from the LUIS portal using the **Test** button on the task bar:
 
-<code>
-https://<i>{Subdomain}</i>.api.cognitive.microsoft.com/luis/prediction/v3.0/apps/<i>{AppId}</i>/slots/production/predict?subscription-key=<i>{LUISSubscriptionKey}</i>&query=<i>yourQuery</i>
-</code>
+1. In the LUIS portal, ensure that the **LUISDevOps-master** app is open.
+1. Click the **Test** button on the taskbar.
+1. Enter a test utterance, for example: *great now i can do devops with my luis apps*. Press **Enter**.
+1. Click the **Inspect** link to view the response from the authoring endpoint.
+1. Click **Compare with published** to send the request to the published endpoint. If you see the message *Please publish your model first*, click **Additional Settings** underneath the **Published** heading and select **Production** in the **Publish slot** dropdown.
+1. You will see the prediction response returned from the LUIS service for the Production slot for this app. You can click **Show JSON view** if you want to view the JSON response from the service:
 
-In this:
+   ![Prediction request](images/testquery.png?raw=true "Prediction request")
 
-* **Subdomain** - Use the prediction resource name. For example, the endpoint URL for a prediction resource called *luisdevops-prediction* will be `https://luisdevops-prediction.cognitiveservices.azure.com`.
-* **AppId** - the LUIS application ID. Get this by signing into the LUIS portal, finding your LUIS app for the master branch and goto the **Manage** tab
-* **LUISSubscriptionKey** - the LUIS Prediction resource key. Get this from the Manage tab for your master LUIS app in the LUIS portal, and then go to Azure Resources. Copy the **Primary Key** shown for the Prediction Resource.
-
-When you have all the information, open a browser and paste in the complete URL with a query such as: 
-
-* *Great now I can do devops with my LUIS apps* which should return a prediction response for the *None* intent.
-* You could also try *I want my vacation to start on July 4th and to last for 10 days* which will predict the *RequestVacation* intent.
-
-You will see the prediction response returned from the LUIS service:
-
-![Prediction request](images/prediction.png?raw=true "Prediction request")
+1. Try other utterances, such as: *i want my vacation to start on july 4th and last for 10 days*.
 
 ## Further Reading
 
