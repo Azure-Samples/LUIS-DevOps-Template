@@ -110,7 +110,7 @@ A Powershell script [./setup/create_sp.ps1](./setup/create_sp.ps1) is provided i
 
 To launch Azure Cloud Shell:
 
-- Go to [https://shell.azure.com](https://shell.azure.com), or click  this button to open Cloud Shell in your browser: [![Launch Cloud Shell in a new window](media/cloud-shell-try-it/hdi-launch-cloud-shell.png)](https://shell.azure.com)
+- Go to [https://shell.azure.com](https://shell.azure.com), or click  this button to open Cloud Shell in your browser: [![Launch Cloud Shell in a new window](./images/hdi-launch-cloud-shell.png)](https://shell.azure.com)
 - Or select the **Cloud Shell** button on the menu bar at the upper right in the [Azure portal](https://portal.azure.com).
 
 When Cloud shell launches, select the Azure subscription you used before to create the Azure resources, and if this is the first time of use, complete the initialization procedure.
