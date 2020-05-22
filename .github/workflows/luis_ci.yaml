@@ -41,13 +41,13 @@ jobs:
         git config remote.origin.url https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git fetch --prune --unshallow    
 
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.3
+    - name: Install GitVersion v0.9.3
+      uses: gittools/actions/gitversion/setup@6dfe406
       with:
           versionSpec: '5.2.x'
-    - name: Use GitVersion
+    - name: Use GitVersion v0.9.3
       id: gitversion
-      uses: gittools/actions/gitversion/execute@v0.9.3
+      uses: gittools/actions/gitversion/execute@6dfe406
         
     - name: LUISAppVersion env
       run: echo "::set-env name=LUISAppVersion::$GitVersion_SemVer" 
@@ -78,7 +78,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli
+      run: npm i -g @microsoft/botframework-cli@4.9.0
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -138,7 +138,7 @@ jobs:
         POSTurl: ${{ env.LUISAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.LUISAppId }}/publish
 
     - name: Install dotnet-nlu
-      run: dotnet tool install -g dotnet-nlu
+      run: dotnet tool install -g dotnet-nlu --version 0.7.5
 
     - name: Add dotnet Tools to Path
       run: echo "::add-path::$HOME/.dotnet/tools"
@@ -149,14 +149,12 @@ jobs:
           xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
 
     - name: Assign LUIS Azure Prediction resource to application
+      shell: pwsh
       run: |
-        curl POST $POSTurl \
-        -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
-        -H "Content-Type: application/json" \
-        -H "Ocp-Apim-Subscription-Key: $LUISAuthoringKey" \
-        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '${{ secrets.AZURE_RESOURCE_GROUP }}', 'AccountName': '${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }}' }"
+          bf luis:application:assignazureaccount --azureSubscriptionId $env:AzureSubscriptionId --appId $env:LUISAppId --accountName $env:luisPredictionResourceName --subscriptionKey $env:LUISAuthoringKey --endpoint $env:LUISAuthoringEndpoint --resourceGroup $env:azureResourceGroup --armToken $(az account get-access-token --query accessToken -o tsv)
       env:
-        POSTurl: ${{ env.LUISAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.LUISAppId }}/azureaccounts
+        luisPredictionResourceName: ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }}
+        azureResourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
     - name: Test Luis model
       run: dotnet nlu test -s luisV3 -u $UNIT_TEST_FILE -o results.json
@@ -261,7 +259,7 @@ jobs:
         xargs -I {} echo "::set-env name=LUISAppVersion::{}"
 
     - name: Install dotnet-nlu
-      run: dotnet tool install -g dotnet-nlu
+      run: dotnet tool install -g dotnet-nlu --version 0.7.5
 
     - name: Add dotnet Tools to Path
       run: echo "::add-path::$HOME/.dotnet/tools"
@@ -285,7 +283,7 @@ jobs:
 
     - name: Compare Luis model F-measure with baseline
       if: env.BASELINE_CONTAINER_NAME != ''
-      run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json --baseline baselinefile.json 
+      run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json --baseline baselinefile.json --test-settings luis-app/tests/compare.yml
 
     # if no baseline configured, then we just compare against the expected results to create statistics that can become the new baseline
     - name: Analyze Luis model F-measure - Create baseline
