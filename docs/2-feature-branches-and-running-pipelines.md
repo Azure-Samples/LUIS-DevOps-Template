@@ -5,7 +5,7 @@ This document explains how to create a feature branch in your GitHub repository,
 In this example, we follow the [GitHub flow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. Broadly you will follow this flow:
 
 * Developer creates a feature branch and does the feature/work in that branch.
-* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master. The developer works on the updates using a LUIS app that they create solely to support the work in the feature branch.
+* When done, the developer does a push of their changes and raises a pull request from their feature branch to master. The developer works on the updates using a LUIS app that they create solely to support the work in the feature branch.
 * The continuous integration workflow is triggered automatically by the pull request and runs as a quality gate check. It builds a temporary LUIS app from the source in the PR, runs unit tests against it and then deletes it at the end of the run.
 * If the workflow completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
 * The merge to master automatically triggers the full CI/CD workflow which:
@@ -70,7 +70,7 @@ To make updates using the LUIS Portal:
 1. Sign into the LUIS portal for [your authoring and publishing region](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions):
    * LUIS authoring portal - [https://www.luis.ai](https://www.luis.ai/home)
    * LUIS authoring portal (Europe) - [https://eu.luis.ai](https://eu.luis.ai/home)
-   * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)
+   * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)  
 
    > **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
@@ -99,9 +99,9 @@ To make updates using the LUIS Portal:
 
 ## Testing the new LUIS model
 
-A developer can use the single testing features in the LUIS portal to test single utterances against the LUIS model. They can also run a test set using the batch testing capability in the portal which is intended for quality testing and for determining the F-measure score for your LUIS app, rather than for executing a suite of unit tests and making sure that they all pass. The CI workflows perform automated unit testing of the LUIS model when you raise your PR, and again when your changes are merged to master.
+The CI workflows are setup to perform automated unit testing of the LUIS model when you raise your PR, and again when your changes are merged to master. The test utterances and the expected responses are defined in the **luis-app/tests/unittests.json** file.
 
-However, it is good development practice for the developer to run all the unit tests during feature development to make sure that no problems have been introduced before checking in changes. For this, we use the **NLU.DevOps** tool, <https://github.com/NLU.DevOps/.>
+It is good development practice for the developer to run all the unit tests manually during feature development to make sure that no problems have been introduced before checking in changes. For this, we use the **NLU.DevOps** tool, <https://github.com/NLU.DevOps/.>
 
 ### Setting up for testing
 

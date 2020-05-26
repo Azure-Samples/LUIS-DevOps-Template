@@ -45,9 +45,9 @@ Ensure that you have logged into the [LUIS authoring portal](https://docs.micros
 
 Choose the LUIS authoring portal most appropriate to your location, one of:
 
-- [LUIS authoring portal](https://www.luis.ai/home)
-- [LUIS authoring portal (Europe)](https://eu.luis.ai/home)
-- [LUIS authoring portal (Australia)](https://au.luis.ai/home)
+- [LUIS authoring portal](https://www.luis.ai/home) - <https://www.luis.ai>
+- [LUIS authoring portal (Europe)](https://eu.luis.ai/home) - <https://eu.luis.ai>
+- [LUIS authoring portal (Australia)](https://au.luis.ai/home) - <https://au.luis.ai>
 
 > **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
@@ -174,7 +174,7 @@ To configure these protections:
 
    1. Click the **Create** button at the bottom of the page
 
-> **Note:** Although you have checked **Require status checks to pass before merging** and the *luis_pr.yaml* workflow will run in response to the raising of a PR, it is still not a hard requirement that the workflow should complete successfully before the PR can be merged. To make it a hard requirement, return to this configuration after the *luis_pr* workflow has run at least once and then you will be able to check the *Build and Test LUIS model (PR)* status check which will make successful completion a hard requirement.
+> **Note:** Although you have checked **Require status checks to pass before merging** and the *luis_pr.yaml* workflow will run in response to the raising of a PR, it is not possible at this time to make it a hard requirement that the workflow should complete successfully before the PR can be merged. To make it a hard requirement, return to this configuration after the *luis_pr* workflow has run at least once and then you will be able to check the *Build and Test LUIS model (PR)* status check which will make successful completion a hard requirement.
 
 ## Updating the LUIS app in a feature branch
 

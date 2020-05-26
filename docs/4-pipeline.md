@@ -1,6 +1,6 @@
 # GitHub Actions workflow with NLU.DevOps
 
-This solution uses two GitHub Actions workflow yaml files [luis_pr.yaml](../.github/workflows/luis_pr.yaml) and [luis_ci.yaml](../.github/workflows/luis_ci.yaml). Apart from setting the GitHub Secrets to match your configuration of resources in Azure, you do not need to make any changes to these files to use them in the solution.
+This solution uses two GitHub Actions workflow yaml files [luis_pr.yaml](../.github/workflows/luis_pr.yaml) and [luis_ci.yaml](../.github/workflows/luis_ci.yaml). To configure the workflows for use, you must set GitHub Secrets to match your configuration of resources in Azure as described below in [GitHub Secrets](#github-secrets), but you should not need to make any edits to these files to use them in the solution.
 
 This document describes the workflow steps so that you can understand how they work should you need to modify them for your own projects.
 
@@ -85,7 +85,7 @@ In addition, the following environment variables set the names of the source fil
   BASELINE_CONTAINER_NAME: ''
 ```
 
-The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F measure testing results for your baseline LUIS app version. This is used for comparison purposes to determine whether the performance of the new model being built from the current source has improved or regressed compared to the baseline. Leave this value blank when starting out with a new app until such time as you have an app of sufficient maturity that you wish to commence comparison testing.
+The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F measure testing results for your baseline LUIS app version. This is used for comparison purposes to determine whether the performance of the new model being built from the current source has improved or regressed compared to the baseline. Leave this value blank when starting out with a new app until such time as you have an app of sufficient maturity that you wish to commence comparison testing. See [Job: LUIS F-measure testing](#job-luis-f-measure-testing) to learn more about the use of this environment variable.
 
 ### Job: Build
 

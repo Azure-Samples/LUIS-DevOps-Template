@@ -2,7 +2,7 @@
 
 This sample uses a sample LUIS project ***vacation_requests***, defined in this repo in the [model.lu file](../luis-app/model.lu). The sample project creates a language understanding model to handle requests for vacation from employees.
 
-If you have built the sample project and have the pipeline working, it is very simple to adapt it to support your own project.
+If you have the GitHub Actions workflows operating correctly using the supplied sample data, it is very simple to adapt it to support your own project.
 
 ## Starting a new project from scratch
 
@@ -39,7 +39,7 @@ If you have built the sample project and have the pipeline working, it is very s
 
 ## Enabling the F-measure testing capability
 
-The **LUIS F-measure testing** job measures performance of your LUIS model. This job performs the equivalent of the [LUIS batch testing](https://docs.microsoft.com/azure/cognitive-services/LUIS/luis-how-to-batch-test) that you can perform in the LUIS portal. It uses the [NLU.DevOps](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md) to execute the tests defined in the `luis-app/tests/verificationtests.json` test file against the newly built model and calculates the test results file, `statistics.json`, from which can be calculated the F1 score (or [F-measure](https://en.wikipedia.org/wiki/F-measure)). The results file from every run is saved to Azure blob storage and it contains:
+The **LUIS F-measure testing** job measures performance of your LUIS model. This job performs the equivalent of the [LUIS batch testing](https://docs.microsoft.com/azure/cognitive-services/LUIS/luis-how-to-batch-test) that you can perform in the LUIS portal. It uses the [NLU.DevOps](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md) tool to execute the tests defined in the `luis-app/tests/verificationtests.json` test file against the newly built model and calculates the test results file, `statistics.json`, from which can be calculated the F1 score (or [F-measure](https://en.wikipedia.org/wiki/F-measure)). The results file from every run is saved to Azure blob storage and it contains:
 
 * For each Intent and Entity:
   * Count of true positives for passing tests
@@ -82,7 +82,7 @@ The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your 
 
 To get the commit hash for the LUIS app version you want to use for your baseline:
 
-* Goto the releases list for your repo on GitHub.
+* Go to the releases list for your repo on GitHub.
 * The shortened version of the hash value is shown in the metadata for the GitHub Release and is a link to the commit details.
 * Click the link to see the details of the commit and to get the full hash value, which gives you the value you must set in the `BASELINE_CONTAINER_NAME` environment variable.
 
@@ -106,7 +106,7 @@ To learn more about defining regression thresholds, read [Performance Regression
 
 ### Making F-measure testing job success mandatory in the workflow
 
-As shipped, the **LUIS F-measure testing** job runs concurrently with the **Create LUIS Release** job and does not block the **LUIS CD** job from running should it fail. 
+As shipped, the **LUIS F-measure testing** job runs concurrently with the **Create LUIS Release** job and does not block the **LUIS CD** job from running should it fail.
 
 In order to make the job mandatory, and to make the running of the **LUIS CD** job conditional on successful completion of the **LUIS F-measure testing** job, edit the `.github\workflows\luis_ci.yaml` and change the `needs:` property of the **LUIS_CD** job, as follows:
 
