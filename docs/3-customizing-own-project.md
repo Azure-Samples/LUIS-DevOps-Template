@@ -39,7 +39,7 @@ If you have the GitHub Actions workflows operating correctly using the supplied 
 
 ## Enabling the F-measure testing capability
 
-The **LUIS F-measure testing** job measures performance of your LUIS model. This job performs the equivalent of the [LUIS batch testing](https://docs.microsoft.com/azure/cognitive-services/LUIS/luis-how-to-batch-test) that you can perform in the LUIS portal. It uses the [NLU.DevOps](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md) tool to execute the tests defined in the `luis-app/tests/verificationtests.json` test file against the newly built model and calculates the test results file, `statistics.json`, from which can be calculated the F1 score (or [F-measure](https://en.wikipedia.org/wiki/F-measure)). The results file from every run is saved to Azure blob storage and it contains:
+The **LUIS F-measure testing** job measures performance of your LUIS model. This job performs the equivalent of the [LUIS batch testing](https://docs.microsoft.com/azure/cognitive-services/LUIS/luis-how-to-batch-test) that you can perform in the LUIS portal. It uses the [NLU.DevOps](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md) tool to execute the tests defined in the `luis-app/tests/verificationtests.json` test file against the newly built model and calculates the test results file, `statistics.json`, from which the F1 score (or [F-measure](https://en.wikipedia.org/wiki/F-measure)) can be calculated. The results file from every run is saved to Azure blob storage and it contains:
 
 * For each Intent and Entity:
   * Count of true positives for passing tests
@@ -47,9 +47,9 @@ The **LUIS F-measure testing** job measures performance of your LUIS model. This
   * Count of false positives from failing tests
   * Count of false negatives from failing tests
   
-As shipped, the **LUIS F-measure testing** job is configured to run concurrently with the **Create LUIS Release** job and runs purely as an advisory and does not block the **LUIS CD** job from running should it fail. It is provided as an example of how to perform model quality testing within the workflow.
+As shipped, the **LUIS F-measure testing** job is configured to run concurrently with the **Create LUIS Release** job and does not block the **LUIS CD** job from running should it fail. It runs purely as an advisory and is provided as an example of how to perform model quality testing within the workflow.
 
-This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
+This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F-measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
 
 Read more about [running tests using NLU.DevOps](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md) and about [analyzing the test results to measure performance](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md) in the NLU.DevOps documentation.
 
@@ -78,7 +78,7 @@ env:
   BASELINE_CONTAINER_NAME: '5bccf3a4b6f866354cafb012b0adb2b73d2f5945'
 ```
 
-The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F measure testing results for your baseline LUIS app version. The name is the SHA-1 hash value of the GitHub commit that was merged and which resulted in the `luis-ci.yaml` workflow executing and the GitHub release created by that workflow.
+The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F-measure testing results for your baseline LUIS app version. The name is the SHA-1 hash value of the GitHub commit that was merged and which resulted in the `luis-ci.yaml` workflow executing and the GitHub release created by that workflow.
 
 To get the commit hash for the LUIS app version you want to use for your baseline:
 

@@ -15,7 +15,7 @@ The workflows operate in response to two distinct events:
 
 When triggered for a PR, the **luis_pr.yaml** workflow acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the workflow if any tests fail; this will block completion of the PR. At the end the temporary LUIS app is deleted.
 
-When triggered for a merge to master, the **luis_ci.yaml** workflow creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and it runs a simple CD (Continuous Deployment) job that publishes the new LUIS app version to the Production slot. It also runs quality tests to determine the F measure for the new model.
+When triggered for a merge to master, the **luis_ci.yaml** workflow creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and it runs a simple CD (Continuous Deployment) job that publishes the new LUIS app version to the Production slot. It also runs quality tests to determine the F-measure for the new model.
 
 The configuration of both workflows ensure that they will be triggered only when either the *LUIS model* or the *test suite* is changed:
 
@@ -72,7 +72,7 @@ env:
   IS_PRIVATE_REPOSITORY: false
 ```
 
-In addition, the following environment variables set the names of the source file that define your LUIS app, and the files containing the unit tests and the F measure quality tests:
+In addition, the following environment variables set the names of the source file that define your LUIS app, and the files containing the unit tests and the F-measure quality tests:
 
 ```yml
   # Set the path to the lu file for your LUIS app
@@ -85,7 +85,7 @@ In addition, the following environment variables set the names of the source fil
   BASELINE_CONTAINER_NAME: ''
 ```
 
-The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F measure testing results for your baseline LUIS app version. This is used for comparison purposes to determine whether the performance of the new model being built from the current source has improved or regressed compared to the baseline. Leave this value blank when starting out with a new app until such time as you have an app of sufficient maturity that you wish to commence comparison testing. See [Job: LUIS F-measure testing](#job-luis-f-measure-testing) to learn more about the use of this environment variable.
+The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F-measure testing results for your baseline LUIS app version. This is used for comparison purposes to determine whether the performance of the new model being built from the current source has improved or regressed compared to the baseline. Leave this value blank when starting out with a new app until such time as you have an app of sufficient maturity that you wish to commence comparison testing. See [Job: LUIS F-measure testing](#job-luis-f-measure-testing) to learn more about the use of this environment variable.
 
 ### Job: Build
 
@@ -379,7 +379,7 @@ The quality testing step only executes after the **build** step has succeeded an
 
 Also note that the `BASELINE_CONTAINER_NAME` environment variable needs to be defined in order to enable comparisons with previous model training runs. This variable should be the name of the Azure blob container which is then used to store the baseline set of test results that we will use to compare our newly built model against. Leaving this environment variable undefined will skip the comparison stage. Read [Configuring the baseline comparison feature](3-customizing-own-project.md#configuring-the-baseline-comparison-feature) to learn more about enabling this feature.
 
-> **Note:** The **LUIS F-measure testing** job runs concurrently with the *Create LUIS Release* job. It is provided in this template as an example of how to perform automated quality testing of a LUIS app. This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
+> **Note:** The **LUIS F-measure testing** job runs concurrently with the *Create LUIS Release* job. It is provided in this template as an example of how to perform automated quality testing of a LUIS app. This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F-measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
 
 In the workflow:
   
@@ -396,7 +396,7 @@ In the workflow:
     if: github.event_name == 'push'  
   ```
 
-Many of the steps to setup tools and assign Azure LUIS resources are the same as in the previous step so are not repeated here. This section will describe only the significant steps that carry out the F measure testing.
+Many of the steps to setup tools and assign Azure LUIS resources are the same as in the previous step so are not repeated here. This section will describe only the significant steps that carry out the F-measure testing.
 
 #### Establish the new App Version built by the Build job
 
@@ -417,7 +417,7 @@ The workflow step executes in its own build environment, so early in this step w
         xargs -I {} echo "::set-env name=LuisVersion::{}"
   ```
 
-#### Executing F measure testing
+#### Executing F-measure testing
 
 Testing uses the verification test file rather than the unit test file:
 
@@ -433,7 +433,7 @@ Testing uses the verification test file rather than the unit test file:
         luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
-#### Compare F measure results with baseline
+#### Compare F-measure results with baseline
 
 If you have set the `BASELINE_CONTAINER_NAME` environment variable to the name of a container in Azure Storage then the workflow will begin storing previous test results.  If results from a previous run exists, then we will download those test results to use as the comparison baseline:
 
@@ -465,7 +465,7 @@ If no previous baseline is configured, then we just generate a new set of result
       run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json
   ```
 
-Finally, we upload the F measure results as a build artifact and also to Azure Storage:
+Finally, we upload the F-measure results as a build artifact and also to Azure Storage:
 
   ```yml
     - name: Archive Quality Test Results
