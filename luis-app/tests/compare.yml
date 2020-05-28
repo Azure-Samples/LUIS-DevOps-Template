@@ -1,0 +1,5 @@
+thresholds:
+- type: intent
+  threshold: 0.05
+- type: entity
+  threshold: 0.05

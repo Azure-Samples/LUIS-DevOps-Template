@@ -1,7 +1,9 @@
 {
     "cSpell.words": [
         "Apim",
+        "appsettings",
         "armtoken",
+        "assignazureaccount",
         "australiaeast",
         "azcliversion",
         "azureaccounts",
@@ -41,6 +43,7 @@
         "noneintent",
         "pos",
         "prstatuschecks",
+        "pwsh",
         "rbac",
         "releasedetails",
         "repos",
