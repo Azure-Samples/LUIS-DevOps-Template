@@ -195,8 +195,15 @@ The *luis_pr.yaml* workflow is operating as a PR quality gate and it creates a t
     # When doing a gate check on PRs, we build a new LUIS application for testing that is later deleted
     - name: Create PR check LUIS application 
       run: |
-        bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json | \
-        jq '.id' | xargs -I {} echo "::set-env name=LUISAppId::{}"
+        response=$(bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json)
+        status=$(echo "$response" | jq '.Status' | xargs)
+        if [ "$status" == "Success" ]
+        then
+          appId=$(echo "$response" | jq '.id' | xargs)
+          echo "::set-env name=LUISAppId::$appId"
+        else
+          exit 1
+        fi
   ```
 
 *luis_ci.yaml* is operating as a Merge workflow, so the LUIS app is the one associated with the master branch and we use the name specified in the YAML file. The app will be created if it does not already exist. This step determines the AppId (GUID) and saves it in the *AppId* environment variable:
@@ -209,7 +216,14 @@ The *luis_pr.yaml* workflow is operating as a PR quality gate and it creates a t
         bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=AppId::{}"
-        echo "Found LUIS app: $AppId"
+
+    - name: Validate application ID
+      run: |
+        echo "LUIS app Id: $LUISAppId"
+        if [ ${#LUISAppId} -ne 36 ]; then
+          echo "ERROR: Failed to find LUIS master app. Check workflow configuration."
+          exit 1
+        fi
   ```
 
 Next, we check if the LUIS app currently has 100 versions (the limit), and if so print a warning and fail the workflow. In order to resolve this, unneeded versions must be deleted from the LUIS master app.

@@ -78,7 +78,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.0
+      run: npm i -g @microsoft/botframework-cli@4.9.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -93,7 +93,14 @@ jobs:
         bf luis:application:list --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=LUISAppId::{}"
-        echo "Found LUIS app: $LUISAppId"
+
+    - name: Validate application ID
+      run: |
+        echo "LUIS app Id: $LUISAppId"
+        if [ ${#LUISAppId} -ne 36 ]; then
+          echo "ERROR: Failed to find LUIS master app. Check workflow configuration."
+          exit 1
+        fi
 
     # Determine the current number of versions in the app, naive policy can purge oldest if count is at limit (100)
     # Current implementation prints error message and fails pipeline.
@@ -129,13 +136,7 @@ jobs:
         done 
 
     - name: Publish luis
-      run: |
-        curl POST $POSTurl \
-        -H "Content-Type: application/json" \
-        -H "Ocp-Apim-Subscription-Key: $LUISAuthoringKey " \
-        --data-ascii "{'versionId': '$LUISAppVersion', 'directVersionPublish': true}" 
-      env:
-        POSTurl: ${{ env.LUISAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.LUISAppId }}/publish
+      run: bf luis:application:publish --appId $LUISAppId --direct --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
 
     - name: Install dotnet-nlu
       run: dotnet tool install -g dotnet-nlu --version 0.7.5
@@ -240,7 +241,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli
+      run: npm i -g @microsoft/botframework-cli@4.9.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -323,7 +324,7 @@ jobs:
         node-version: '12.x'
       
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli
+      run: npm i -g @microsoft/botframework-cli@4.9.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"

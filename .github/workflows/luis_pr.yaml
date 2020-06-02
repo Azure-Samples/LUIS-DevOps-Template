@@ -54,7 +54,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli
+      run: npm i -g @microsoft/botframework-cli@4.9.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -65,8 +65,15 @@ jobs:
     # When doing a gate check on PRs, we build a new LUIS application for testing that is later deleted
     - name: Create PR check LUIS application 
       run: |
-        bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json | \
-        jq '.id' | xargs -I {} echo "::set-env name=LUISAppId::{}"
+        response=$(bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json)
+        status=$(echo "$response" | jq '.Status' | xargs)
+        if [ "$status" == "Success" ]
+        then
+          appId=$(echo "$response" | jq '.id' | xargs)
+          echo "::set-env name=LUISAppId::$appId"
+        else
+          exit 1
+        fi
         
     - name: Train luis
       run: bf luis:train:run --appId $LUISAppId --versionId 0.1 --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey

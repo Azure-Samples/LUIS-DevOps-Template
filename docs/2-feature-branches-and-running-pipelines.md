@@ -244,7 +244,13 @@ You can test out the new LUIS app version by sending a prediction request from t
 
 1. Try other utterances, such as: *i want my vacation to start on july 4th and last for 10 days*.
 
-## Further Reading
+## Next Steps
+
+For the next steps, find out how to adapt this repository to your own project:
+
+*-* **Next:** [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch).
+
+#### Further Reading
 
 See the following documents for more information on this template and the engineering practices it demonstrates:
 
@@ -252,4 +258,4 @@ See the following documents for more information on this template and the engine
 
 * [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch)
 
-* [CI/CD workflow operation](4-pipeline.md#workflow-steps)
+* [GitHub Actions workflows](4-pipeline.md#workflow-steps)

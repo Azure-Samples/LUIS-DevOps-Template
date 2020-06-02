@@ -176,13 +176,13 @@ To configure these protections:
 
 > **Note:** Although you have checked **Require status checks to pass before merging** and the *luis_pr.yaml* workflow will run in response to the raising of a PR, it is not possible at this time to make it a hard requirement that the workflow should complete successfully before the PR can be merged. To make it a hard requirement, return to this configuration after the *luis_pr* workflow has run at least once and then you will be able to check the *Build and Test LUIS model (PR)* status check which will make successful completion a hard requirement.
 
-## Updating the LUIS app in a feature branch
+## Next Steps
 
 For the next steps, find out how to create a feature branch, make updates to your LUIS app, and to execute the CI/CD workflows:
 
 - **Next:** [Creating a Feature branch, updating your LUIS app, and executing the CI/CD workflows](2-feature-branches-and-running-pipelines.md).
 
-## Further Reading
+#### Further Reading
 
 See the following documents for more information on this template and the engineering practices it demonstrates:
 
