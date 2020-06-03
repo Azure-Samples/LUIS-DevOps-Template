@@ -8,7 +8,7 @@ If you have the GitHub Actions workflows operating correctly using the supplied 
 
 1. Create a Feature branch in your repository
 
-1. Define your own app model using LUDown by one of the two methods:
+1. Define your own app model using [LUDown](https://docs.microsoft.com/azure/bot-service/file-format/bot-builder-lu-file-format?view=azure-bot-service-4.0) by one of the two methods:
 
    * Write the LUDown directly into the **luis-app/model.lu** file using a text editor, replacing the sample app content.
    * Define your new LUIS app using the [LUIS portal](https://www.luis.ai) and when you have made your changes, export the active version using the **Export as LU** menu. Rename the export file as **model.lu** and save it to the **luis-app** folder replacing the existing file.

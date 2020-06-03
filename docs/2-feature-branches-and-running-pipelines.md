@@ -53,7 +53,7 @@ If you followed the [setup instruction for this sample](../README.md) you will h
 
 ## Make your LUIS app updates
 
-Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://github.com/microsoft/botframework-cli/blob/master/packages/luis/docs/lu-file-format.md) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
+Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://docs.microsoft.com/azure/bot-service/file-format/bot-builder-lu-file-format?view=azure-bot-service-4.0) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
 
 In this sample, the LUDown for a sample application and the test files are provided:
 
