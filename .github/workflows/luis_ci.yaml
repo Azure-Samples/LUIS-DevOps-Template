@@ -39,18 +39,18 @@ jobs:
       if: env.IS_PRIVATE_REPOSITORY == 'true'
       run: |
         git config remote.origin.url https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-        git fetch --prune --unshallow    
+        git fetch --prune --unshallow
 
     - name: Install GitVersion v0.9.3
       uses: gittools/actions/gitversion/setup@6dfe406
       with:
-          versionSpec: '5.2.x'
+        versionSpec: '5.2.x'
     - name: Use GitVersion v0.9.3
       id: gitversion
       uses: gittools/actions/gitversion/execute@6dfe406
-        
+
     - name: LUISAppVersion env
-      run: echo "::set-env name=LUISAppVersion::$GitVersion_SemVer" 
+      run: echo "::set-env name=LUISAppVersion::$GitVersion_SemVer"
 
     - uses: azure/login@v1
       with:
@@ -58,20 +58,20 @@ jobs:
 
     - name: Get LUIS authoring key
       run: |
-         keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-         echo "::set-env name=LUISAuthoringKey::$keya"
-         echo "::add-mask::$keya"
+        keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
+        echo "::set-env name=LUISAuthoringKey::$keya"
+        echo "::add-mask::$keya"
 
     - name: Get LUIS prediction key
       run: |
-         keyp=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-         echo "::set-env name=LUISPredictionKey::$keyp"
-         echo "::add-mask::$keyp"
+        keyp=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
+        echo "::set-env name=LUISPredictionKey::$keyp"
+        echo "::add-mask::$keyp"
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "endpoint" | \
-          xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
+        az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "endpoint" | \
+        xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
 
     - uses: actions/setup-node@v1
       with:
@@ -111,7 +111,7 @@ jobs:
           echo "ERROR: LUIS app: $LUISAppId version count will exceed 100. Delete unneeded versions before re-running pipeline"
           exit 1
         fi
-      
+
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application 
     - name: Create new LUIS application version
       run: bf luis:version:import --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json
@@ -122,7 +122,7 @@ jobs:
     - name: Wait for train
       run: |
         while true
-        do 
+        do
           status=`bf luis:version:list --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey |  jq '.[] | select(.version == '\"$LUISAppVersion\"') | .trainingStatus' | xargs`
           if [ "$status" == "Trained" ]
           then
@@ -133,7 +133,7 @@ jobs:
           fi
           echo 'sleep 10'
           sleep 10
-        done 
+        done
 
     - name: Publish luis
       run: bf luis:application:publish --appId $LUISAppId --direct --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
@@ -146,8 +146,8 @@ jobs:
 
     - name: Get Azure subscriptionId
       run: |
-          az account show --query 'id' | \
-          xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
+        az account show --query 'id' | \
+        xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
 
     - name: Assign LUIS Azure Prediction resource to application
       shell: pwsh
@@ -220,21 +220,20 @@ jobs:
 
     - name: Get LUIS authoring key
       run: |
-
-         keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-         echo "::set-env name=LUISAuthoringKey::$keya"
-         echo "::add-mask::$keya"
+        keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
+        echo "::set-env name=LUISAuthoringKey::$keya"
+        echo "::add-mask::$keya"
 
     - name: Get LUIS prediction key
       run: |
-         keyp=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-         echo "::set-env name=LUISPredictionKey::$keyp"
-         echo "::add-mask::$keyp"
+        keyp=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
+        echo "::set-env name=LUISPredictionKey::$keyp"
+        echo "::add-mask::$keyp"
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "endpoint" | \
-          xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
+        az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "endpoint" | \
+        xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
 
     - uses: actions/setup-node@v1
       with:
@@ -267,8 +266,8 @@ jobs:
 
     - name: Test Luis model with quality verification tests
       run: dotnet nlu test -s luisV3 -u $QUALITY_TEST_FILE -o F-results.json
-      env: 
-        luisAppId: ${{ env.LUISAppId }} 
+      env:
+        luisAppId: ${{ env.LUISAppId }}
         luisVersionId: ${{ env.LUISAppVersion }}
         luisDirectVersionPublish: true
         luisEndpointKey: ${{ env.LUISPredictionKey }}
@@ -289,7 +288,7 @@ jobs:
     # if no baseline configured, then we just compare against the expected results to create statistics that can become the new baseline
     - name: Analyze Luis model F-measure - Create baseline
       if: env.BASELINE_CONTAINER_NAME == ''
-      run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json 
+      run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json
 
     - name: Archive Quality Test Results
       if: env.BASELINE_CONTAINER_NAME != ''
@@ -322,7 +321,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-      
+
     - name: Install @microsoft/botframework-cli
       run: npm i -g @microsoft/botframework-cli@4.9.1
 
@@ -331,14 +330,14 @@ jobs:
 
     - name: Get LUIS authoring key
       run: |
-         keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-         echo "::set-env name=LUISAuthoringKey::$keya"
-         echo "::add-mask::$keya"
+        keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
+        echo "::set-env name=LUISAuthoringKey::$keya"
+        echo "::add-mask::$keya"
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "endpoint" | \
-          xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
+        az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "endpoint" | \
+        xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
 
     - name: Get master LUIS application ID
       run: |
