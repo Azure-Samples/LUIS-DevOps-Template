@@ -53,7 +53,7 @@ If you followed the [setup instruction for this sample](../README.md) you will h
 
 ## Make your LUIS app updates
 
-Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://docs.microsoft.com/azure/bot-service/file-format/bot-builder-lu-file-format?view=azure-bot-service-4.0) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
+Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests, and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://docs.microsoft.com/azure/bot-service/file-format/bot-builder-lu-file-format?view=azure-bot-service-4.0) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
 
 In this sample, the LUDown for a sample application and the test files are provided:
 
@@ -201,7 +201,7 @@ If you click on the **Actions** tab immediately after you merge your pull reques
 * It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file. The app is created if it does not already exist, such as on first run of the workflow.
 * It runs the job **LUIS Build and Test** which builds the new LUIS master app version and runs unit tests against it and if the tests pass it creates a GitHub release for the new version.
 * If the *LUIS Build and Test* job completes successfully, it runs the **LUIS CD** job . This job publishes the app version to the [Production endpoint](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-publish-app). It is a simple example of a CD (Continuous Delivery) workflow.
-* It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the batch testing capability in the LUIS portal).  
+* It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the [batch testing](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-batch-test) capability in the LUIS portal).  
 The **LUIS F-measure testing** job is currently configured to run concurrently with the **Create LUIS Release** job and runs purely as an advisory and does not block the **LUIS CD** job from running should it fail. It is provided as an example of how to perform model quality testing within the workflow. See  [Enabling the F-measure testing capability](3-customizing-own-project.md#enabling-the-f-measure-testing-capability) for details of how to enable this feature.
 * If the workflow fails, the repository contributors and the author of the pull request are notified by email and must determine the failing tests and resolve the code failures that caused the workflow failure.
 

@@ -94,6 +94,7 @@ jobs:
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=LUISAppId::{}"
 
+    # Check that we found the master app Id - failure probably indicates misconfiguration
     - name: Validate application ID
       run: |
         echo "LUIS app Id: $LUISAppId"

@@ -217,6 +217,7 @@ The *luis_pr.yaml* workflow is operating as a PR quality gate and it creates a t
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=AppId::{}"
 
+    # Check that we found the master app Id - failure probably indicates misconfiguration
     - name: Validate application ID
       run: |
         echo "LUIS app Id: $LUISAppId"
