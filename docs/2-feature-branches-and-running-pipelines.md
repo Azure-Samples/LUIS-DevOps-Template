@@ -1,16 +1,16 @@
 # 2. Making updates to a LUIS app in a feature branch
 
-This document explains how to create a feature branch in your GitHub repository, how to make updates to your LUIS app and to save changes in source control, how to raise a pull request (PR) to merge the updates back into the master branch and how to execute continuous integration pipelines.
+This document explains how to create a feature branch in your GitHub repository, how to make updates to your LUIS app and to save changes in source control, how to raise a pull request (PR) to merge the updates back into the master branch and how to execute continuous integration workflows.
 
 In this example, we follow the [GitHub flow branching strategy](https://guides.github.com/introduction/flow/index.html) which is a simple and effective branching strategy. Broadly you will follow this flow:
 
 * Developer creates a feature branch and does the feature/work in that branch.
-* When done, the developer does a Push of their changes and raises a pull request from their feature branch to master. The developer works on the updates using a LUIS app that they create solely to support the work in the feature branch.
-* The continuous integration pipeline is triggered automatically by the pull request and runs as a quality gate check. It builds a temporary LUIS app from the source in the PR, runs unit tests against it and then deletes it at the end of the run.
-* If the pipeline completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
-* The merge to master automatically triggers the full CI/CD pipeline which:
-  * Creates a new LUIS app version in the *master* LUIS app from the merged source. This LUIS app will be created if it does not already exist, such as on first run of the CI/CD pipeline.
-  * Runs unit test against it. If the tests fail, GitHub fails the pipeline and notifies repository members by email.
+* When done, the developer does a push of their changes and raises a pull request from their feature branch to master. The developer works on the updates using a LUIS app that they create solely to support the work in the feature branch.
+* The continuous integration workflow is triggered automatically by the pull request and runs as a quality gate check. It builds a temporary LUIS app from the source in the PR, runs unit tests against it and then deletes it at the end of the run.
+* If the workflow completes successfully, and reviewers approve the pull request, the developer merges the PR into master.
+* The merge to master automatically triggers the full CI/CD workflow which:
+  * Creates a new LUIS app version in the *master* LUIS app from the merged source. This LUIS app will be created if it does not already exist, such as on first run of the CI/CD workflow.
+  * Runs unit test against it. If the tests fail, GitHub fails the workflow and notifies repository members by email.
   * If unit tests pass, creates a [GitHub Release](https://help.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) of the repository.
   * Runs LUIS quality tests to determine and publish the F-measure of the new LUIS app version.
 
@@ -29,7 +29,7 @@ You will be performing the following steps to make updates to the LUIS app:
     * [Setting up for testing](#setting-up-for-testing)
     * [Testing the LUIS app](#testing-the-luis-app)
   * [Raising the pull request](#raising-the-pull-request)
-  * [Running the CI/CD pipeline](#running-the-cicd-pipeline)
+  * [Running the CI/CD workflow](#running-the-cicd-workflow)
     * [Verifying the new LUIS master app version](#verifying-the-new-luis-master-app-version)
     * [Executing predictions against the LUIS app version endpoint](#executing-predictions-against-the-luis-app-version-endpoint)
 
@@ -53,7 +53,7 @@ If you followed the [setup instruction for this sample](../README.md) you will h
 
 ## Make your LUIS app updates
 
-Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://github.com/microsoft/botframework-cli/blob/master/packages/luis/docs/lu-file-format.md) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
+Now that you are working inside the feature branch, you can make your updates to the LUIS app source, unit tests, and model verification tests. If this was a brand new project, you would need to create the LUDown representation of the first version of your LUIS app and the JSON files for testing and check them in. We use the [LUDown format](https://docs.microsoft.com/azure/bot-service/file-format/bot-builder-lu-file-format?view=azure-bot-service-4.0) to define a LUIS app since it can be maintained in a source control system and is human readable which enables the reviewing process because of its legibility.
 
 In this sample, the LUDown for a sample application and the test files are provided:
 
@@ -70,11 +70,11 @@ To make updates using the LUIS Portal:
 1. Sign into the LUIS portal for [your authoring and publishing region](https://docs.microsoft.com/azure/cognitive-services/luis/luis-reference-regions):
    * LUIS authoring portal - [https://www.luis.ai](https://www.luis.ai/home)
    * LUIS authoring portal (Europe) - [https://eu.luis.ai](https://eu.luis.ai/home)
-   * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)
+   * LUIS authoring portal (Asia) - [https://au.luis.ai](https://au.luis.ai/home)  
 
    > **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to follow all the steps described in this solution walkthrough. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
-1. Select the Azure subscription and the authoring resource you want to use while you are working in the feature branch (note that this does not have to be the same subscription and/or authoring resource that you configured for the pipelines):
+1. Select the Azure subscription and the authoring resource you want to use while you are working in the feature branch (note that this does not have to be the same subscription and/or authoring resource that you configured for the GitHub Actions workflows):
 
    ![Select Authoring Resource](images/LUIS_portal_authoring_resource.png?raw=true "Select authoring resource")
 
@@ -99,9 +99,9 @@ To make updates using the LUIS Portal:
 
 ## Testing the new LUIS model
 
-A developer can use the single testing features in the LUIS portal to test single utterances against the LUIS model. They can also run a test set using the batch testing capability in the portal which is intended for quality testing and for determining the F-measure score for your LUIS app, rather than for executing a suite of unit tests and making sure that they all pass. The CI pipelines perform automated unit testing of the LUIS model when you raise your PR, and again when your changes are merged to master.
+The CI workflows are setup to perform automated unit testing of the LUIS model when you raise your PR, and again when your changes are merged to master. The test utterances and the expected responses are defined in the **luis-app/tests/unittests.json** file.
 
-However, it is good development practice for the developer to run all the unit tests during feature development to make sure that no problems have been introduced before checking in changes. For this, we use the **NLU.DevOps** tool, <https://github.com/NLU.DevOps/.>
+It is good development practice for the developer to run all the unit tests manually during feature development to make sure that no problems have been introduced before checking in changes. For this, we use the **NLU.DevOps** tool, <https://github.com/NLU.DevOps/.>
 
 ### Setting up for testing
 
@@ -178,14 +178,14 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
 
    * In the **Open a pull request** page, click the green **Create pull request** button near the bottom of the page.
 
-   * You will see that after the pull request is raised, the status screen shows that completion of the pull request is blocked because of **Review required**. In addition, after a few seconds, you will see an additional status display **Some checks haven't completed yet** and underneath that the status of the **LUIS-CI /Build and Test LUIS model (pull_request)** CI pipeline as it runs, triggered by the raising of the pull request.
+   * You will see that after the pull request is raised, the status screen shows that completion of the pull request is blocked because of **Review required**. In addition, after a few seconds, you will see an additional status display **Some checks haven't completed yet** and underneath that the status of the **LUIS-CI /Build and Test LUIS model (pull_request)** CI workflow as it runs, triggered by the raising of the pull request.
 
    ![pull request status](images/prstatuschecks.png?raw=true "Pull Request Status")
 
-    * You can click on the **Details** link next to the Build pipeline status to see the pipeline stages as they execute.
-    * Read more about the internals and operation of the pipeline in the document [GitHub Actions pipeline with NLU.DevOps](4-pipeline.md).
+    * You can click on the **Details** link next to the Build workflow status to see the workflow stages as they execute.
+    * Read more about the internals and operation of the workflow in the document [GitHub Actions workflow with NLU.DevOps](4-pipeline.md).
 
-1. When the pipeline has completed, the **All checks have passed** status shows as green since the CI pipeline ran and the unit tests passed. The pipeline has performed its function of a quality gate on the changes in the pull request. However, merging of the pull request is still blocked since at least 1 approving review is required by reviewers.
+1. When the workflow has completed, the **All checks have passed** status shows as green since the CI workflow ran and the unit tests passed. The workflow has performed its function of a quality gate on the changes in the pull request. However, merging of the pull request is still blocked since at least 1 approving review is required by reviewers.
 
 ![merging is blocked](images/mergingblocked.png?raw=true "Merging is blocked")
 
@@ -194,39 +194,40 @@ Now that the changes have been applied to the LUIS app and you have tested it, y
    * On the next page, check **Use your administrator privileges to merge this pull request.**
    * Click **Confirm merge**.
 
-## Running the CI/CD pipeline
+## Running the CI/CD workflow
 
-If you click on the **Actions** tab immediately after you merge your pull request, you will see that the full CI/CD pipeline has already been triggered and is executing by the push to master. The first job of this pipeline is similar to the one that executed for the pull request, but it has some important differences in operation:
+If you click on the **Actions** tab immediately after you merge your pull request, you will see that the full CI/CD workflow has already been triggered and is executing by the push to master. The first job of this workflow is similar to the one that executed for the pull request, but it has some important differences in operation:
 
-* It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file. The app is created if it does not already exist, such as on first run of the pipeline.
+* It builds a new LUIS app version from the source that has been merged. It uses the LUIS app that is dedicated to the master branch, the name of which is set in the environment variables at the top of the **.github/workflows/luis_ci.yaml** file. The app is created if it does not already exist, such as on first run of the workflow.
 * It runs the job **LUIS Build and Test** which builds the new LUIS master app version and runs unit tests against it and if the tests pass it creates a GitHub release for the new version.
-* If the *LUIS Build and Test* job completes successfully, it runs the **LUIS CD** job . This job publishes the app version to the [Production endpoint](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-publish-app). It is a simple example of a CD (Continuous Delivery) pipeline.
-* It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the batch testing capability in the LUIS portal). This job runs concurrently with the **Create LUIS Release** job.
-* If the pipeline fails, the repository contributors and the author of the pull request are notified by email and must determine the failing tests and resolve the code failures that caused the pipeline failure.
+* If the *LUIS Build and Test* job completes successfully, it runs the **LUIS CD** job . This job publishes the app version to the [Production endpoint](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-publish-app). It is a simple example of a CD (Continuous Delivery) workflow.
+* It also runs the **LUIS F-measure testing** job which runs LUIS verification tests (equivalent to using the [batch testing](https://docs.microsoft.com/azure/cognitive-services/luis/luis-how-to-batch-test) capability in the LUIS portal).  
+The **LUIS F-measure testing** job is currently configured to run concurrently with the **Create LUIS Release** job and runs purely as an advisory and does not block the **LUIS CD** job from running should it fail. It is provided as an example of how to perform model quality testing within the workflow. See  [Enabling the F-measure testing capability](3-customizing-own-project.md#enabling-the-f-measure-testing-capability) for details of how to enable this feature.
+* If the workflow fails, the repository contributors and the author of the pull request are notified by email and must determine the failing tests and resolve the code failures that caused the workflow failure.
 
-![CI/CD pipeline completed](images/cicdpipelinecompleted.png?raw=true "CI/CD pipeline completed")
+![CI/CD workflow completed](images/cicdpipelinecompleted.png?raw=true "CI/CD workflow completed")
 
 ### Verifying the new LUIS master app version
 
 > **Note:** This solution uses [GitVersion](https://gitversion.net/docs/why) to increment the version number on every build. It looks at your git history on every commit to calculate what the version currently is, and calculates the new version number automatically using semantic versioning. You can instruct GitVersion to manually increment the major, minor or patch version using commit messages, or by setting the next-version property in the GitVersion.yml file in the root of your repository. Read more about [GitVersion Version Incrementing](https://gitversion.net/docs/more-info/version-increments) in the GitVersion documentation.
 
-After the pipeline has completed successfully, if you look on the home page of your repository, you can see that a new release has been created:
+After the workflow has completed successfully, if you look on the home page of your repository, you can see that a new release has been created:
 
 ![GitHub Release](images/release.png?raw=true "GitHub Release")
 
-When you click on this release flag, you can see the details of the new release, which is the zipped source code from the repository and a file called **luis_latest_version.json**.If you click on **luis_latest_version.json** you can download it and open it in a text editor. This gives you data about the new LUIS app version the pipeline has created.
+When you click on this release flag, you can see the details of the new release, which is the zipped source code from the repository and a file called **luis_latest_version.json**.If you click on **luis_latest_version.json** you can download it and open it in a text editor. This gives you data about the new LUIS app version the workflow has created.
 
 ![GitHub Release Details](images/releasedetails.png?raw=true "GitHub Release Details")
 
-To view the LUIS app version that the pipeline has created:
+To view the LUIS app version that the workflow has created:
 
-1. Go to the LUIS Portal to the **My apps** page, select your Azure subscription and the LUIS authoring resource you configured for the pipeline during [Provisioning Azure resources](1-project-setup.md#provisioning-azure-resources) while setting up this solution.
-1. You will see the **LUISDevOps-master** app that the pipeline has created. This name of this app is defined in the [Environment variables](4-pipeline.md#environment-variables) at the top of *luis_ci.yaml*.
-1. Select the **LUISDevOps-master** app and go to the **Manage** tab, and then to **Versions**, you can see the LUIS app version that the pipeline has built and tested.
+1. Go to the LUIS Portal to the **My apps** page, select your Azure subscription and the LUIS authoring resource you configured for the workflow during [Provisioning Azure resources](1-project-setup.md#provisioning-azure-resources) while setting up this solution.
+1. You will see the **LUISDevOps-master** app that the workflow has created. This name of this app is defined in the [Environment variables](4-pipeline.md#environment-variables) at the top of *luis_ci.yaml*.
+1. Select the **LUISDevOps-master** app and go to the **Manage** tab, and then to **Versions**, you can see the LUIS app version that the workflow has built and tested.
 
 ![LUIS portal master app](images/luismasterapp.png?raw=true "LUIS portal master app")
 
-> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to find apps in the portal that have been created using Azure LUIS Authoring resources, such as the app created by this pipeline. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
+> **Important:** If you are an existing LUIS user and have not yet migrated your account to use an Azure resource authoring key rather than an email, you should consider doing this now. If you do not migrate your account, you will not be able to select LUIS Authoring resources in the portal and it will not be possible to find apps in the portal that have been created using Azure LUIS Authoring resources, such as the app created by this workflow. See [Migrate to an Azure resource authoring key](https://docs.microsoft.com/azure/cognitive-services/luis/luis-migration-authoring) for more information.
 
 ### Executing predictions against the LUIS app version endpoint
 
@@ -243,7 +244,13 @@ You can test out the new LUIS app version by sending a prediction request from t
 
 1. Try other utterances, such as: *i want my vacation to start on july 4th and last for 10 days*.
 
-## Further Reading
+## Next Steps
+
+For the next steps, find out how to adapt this repository to your own project:
+
+*-* **Next:** [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch).
+
+#### Further Reading
 
 See the following documents for more information on this template and the engineering practices it demonstrates:
 
@@ -251,4 +258,4 @@ See the following documents for more information on this template and the engine
 
 * [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch)
 
-* [CI/CD pipeline operation](4-pipeline.md#pipeline-steps)
+* [GitHub Actions workflows](4-pipeline.md#workflow-steps)

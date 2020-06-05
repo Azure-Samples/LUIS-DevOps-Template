@@ -1,23 +1,23 @@
-# GitHub Actions pipeline with NLU.DevOps
+# GitHub Actions workflow with NLU.DevOps
 
-This solution uses two GitHub Actions workflow yaml files [luis_pr.yaml](../.github/workflows/luis_pr.yaml) and [luis_ci.yaml](../.github/workflows/luis_ci.yaml). Apart from setting the GitHub Secrets to match your configuration of resources in Azure, you do not need to make any changes to these files to use them in the solution.
+This solution uses two GitHub Actions workflow yaml files [luis_pr.yaml](../.github/workflows/luis_pr.yaml) and [luis_ci.yaml](../.github/workflows/luis_ci.yaml). To configure the workflows for use, you must set GitHub Secrets to match your configuration of resources in Azure as described below in [GitHub Secrets](#github-secrets), but you should not need to make any edits to these files to use them in the solution.
 
-This document describes the pipeline steps so that you can understand how they work should you need to modify them for your own projects.
+This document describes the workflow steps so that you can understand how they work should you need to modify them for your own projects.
 
-## The Pipelines
+## The workflows
 
-The pipeline operates in response to two distinct events:
+The workflows operate in response to two distinct events:
 
-* On raising of a Pull Request (PR) for changes made in a feature branch that will be merged to master, pipeline [luis_pr.yaml](../.github/workflows/luis_pr.yaml) executes.
+* On raising of a Pull Request (PR) for changes made in a feature branch that will be merged to master, the [luis_pr.yaml](../.github/workflows/luis_pr.yaml) workflow executes.
 * When a PR has been merged and the changes are pushed to master, [luis_ci.yaml](../.github/workflows/luis_ci.yaml) executes.
 
 ### Triggers
 
-When triggered for a PR, the **luis_pr.yaml** pipeline acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the pipeline if any tests fail; this will block completion of the PR. At the end the temporary LUIS app is deleted.
+When triggered for a PR, the **luis_pr.yaml** workflow acts as a quality gate. It builds a temporary LUIS app, runs all the unit tests against it and fails the workflow if any tests fail; this will block completion of the PR. At the end the temporary LUIS app is deleted.
 
-When triggered for a merge to master, the **luis_ci.yaml** pipeline creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and it runs a simple CD (Continuous Deployment) job that publishes the new LUIS app version to the Production slot. It also runs quality tests to determine the F measure for the new model.
+When triggered for a merge to master, the **luis_ci.yaml** workflow creates a new version in the LUIS app that has been created for the master branch, runs the unit tests, and if the tests pass, creates a GitHub release which includes a Release artifact containing data identifying the new version, and it runs a simple CD (Continuous Deployment) job that publishes the new LUIS app version to the Production slot. It also runs quality tests to determine the F-measure for the new model.
 
-The configuration of both pipelines ensure that they will be triggered only when either the *LUIS model* or the *test suite* is changed:
+The configuration of both workflows ensure that they will be triggered only when either the *LUIS model* or the *test suite* is changed:
 
   ```yml
     name: LUIS-PR
@@ -47,7 +47,7 @@ The trigger configuration for **luis_ci.yaml** ensures that it runs when a merge
 
 ### GitHub Secrets
 
-Both pipelines make use of a number of variables that must be defined in GitHub Secrets. Ensure each of the following secrets have been set, using the values appropriate to your configuration of resources in Azure:
+Both workflows make use of a number of variables that must be defined in GitHub Secrets. Ensure each of the following secrets have been set, using the values appropriate to your configuration of resources in Azure:
 
 | Secret Name | Value |
 |-------------|-------|
@@ -59,9 +59,9 @@ Both pipelines make use of a number of variables that must be defined in GitHub 
 
 ### Environment variables
 
-The pipelines also use a number of environment variables that are defined at workflow scope:
+The workflows also use a number of environment variables that are defined at workflow scope:
 
-* **LUIS_MASTER_APP_NAME** Set this to the name of the LUIS app that is built from the source checked into the master branch, and which the pipeline will create when it first runs.
+* **LUIS_MASTER_APP_NAME** Set this to the name of the LUIS app that is built from the source checked into the master branch, and which the workflow will create when it first runs.
 * **IS_PRIVATE_REPOSITORY** Set this to `true` if your GitHub repository is private, otherwise set to `false`.
 
 ```yml
@@ -72,7 +72,7 @@ env:
   IS_PRIVATE_REPOSITORY: false
 ```
 
-In addition, the following environment variables set the names of the source file that define your LUIS app, and the files containing the unit tests and the F measure quality tests:
+In addition, the following environment variables set the names of the source file that define your LUIS app, and the files containing the unit tests and the F-measure quality tests:
 
 ```yml
   # Set the path to the lu file for your LUIS app
@@ -85,12 +85,12 @@ In addition, the following environment variables set the names of the source fil
   BASELINE_CONTAINER_NAME: ''
 ```
 
-The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F measure testing results for your baseline LUIS app version. This is used for comparison purposes to determine whether the performance of the new model being built from the current source has improved or regressed compared to the baseline. Leave this value blank when starting out with a new app until such time as you have an app of sufficient maturity that you wish to commence comparison testing.
+The `BASELINE_CONTAINER_NAME` defines the name of the storage container in your Azure Storage account that contains F-measure testing results for your baseline LUIS app version. This is used for comparison purposes to determine whether the performance of the new model being built from the current source has improved or regressed compared to the baseline. Leave this value blank when starting out with a new app until such time as you have an app of sufficient maturity that you wish to commence comparison testing. See [Job: LUIS F-measure testing](#job-luis-f-measure-testing) to learn more about the use of this environment variable.
 
 ### Job: Build
 
-The **[luis_ci.yaml](../.github/workflows/luis_ci.yaml)** pipeline is divided into three discrete jobs. Each job runs independently but sequentially in its own environment and the pipeline is configured so that the **build** job executes first, followed by the **LUIS_quality_testing** job and the **release** job.
-The **[luis_pr.yaml](../.github/workflows/luis_pr.yaml)** pipeline is a single job that is almost identical to the first job of the **luis_ci.yaml** pipeline, but with these distinct differences:
+The **[luis_ci.yaml](../.github/workflows/luis_ci.yaml)** workflow is divided into three discrete jobs. Each job runs independently but sequentially in its own environment and the workflow is configured so that the **build** job executes first, followed by the **LUIS_quality_testing** job and the **release** job.
+The **[luis_pr.yaml](../.github/workflows/luis_pr.yaml)** workflow is a single job that is almost identical to the first job of the **luis_ci.yaml** workflow, but with these distinct differences:
 
 * *luis_pr.yaml* creates a temporary LUIS app from the source in the PR that acts as the test target and is deleted again at the end of the run
 * *luis_ci.yaml* creates a new version in the LUIS app for the master branch from the merged source in master which is not deleted at the end of the run. 
@@ -176,7 +176,7 @@ Next we install node.js (necessary for running the Bot Framework CLI) and the BF
 
 #### Build LUIS app version
 
-The next stage of the pipeline creates a LUIS model.
+The next stage of the workflow creates a LUIS model.
 We import and use a [ludown.lu](./ludown.lu) file for training. We use the [LuDown format](https://github.com/microsoft/botbuilder-tools/tree/master/packages/Ludown#ludown) to define the LUIS app version since it can be maintained in a source control system and is human readable to allow us to work with it outside the LUIS portal's GUI tool.
 You can replace this file with another file that defines the intents, utterances, entities that you need for your own model. This may be useful if you are generating your training data from some other system or by some other mechanism. Ultimately, we need to provide the information in the LUIS JSON format and the BF CLI provides tooling to support this.
 
@@ -187,19 +187,26 @@ The first step transforms the ludown file to a LUIS JSON file using the botframe
       run: bf luis:convert -i $LU_FILE -o ./model.json --name 'LUIS CI pipeline - ${{ github.run_id }}' --versionid $luisAppVersion
   ```
 
-The `model.json` file output must be imported to LUIS. This happens in different ways depending on whether the pipeline is operating as a PR gate-check - where it creates a new LUIS app for testing which is deleted at the end of the pipeline - or if operating as a Merge pipeline.
+The `model.json` file output must be imported to LUIS. This happens in different ways depending on whether the workflow is operating as a PR gate-check - where it creates a new LUIS app for testing which is deleted at the end of the workflow - or if operating as a Merge workflow.
 
-The *luis_pr.yaml* pipeline is operating as a PR quality gate and it creates a temporary app to use as the test target. `bf luis:application:import` returns a string with the LUIS App ID that we will need to use in the next steps, so we save the AppId in an environment variable called *LUISAppId*:
+The *luis_pr.yaml* workflow is operating as a PR quality gate and it creates a temporary app to use as the test target. `bf luis:application:import` returns a string with the LUIS App ID that we will need to use in the next steps, so we save the AppId in an environment variable called *LUISAppId*:
 
   ```yml
     # When doing a gate check on PRs, we build a new LUIS application for testing that is later deleted
     - name: Create PR check LUIS application 
       run: |
-        bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json | \
-        jq '.id' | xargs -I {} echo "::set-env name=LUISAppId::{}"
+        response=$(bf luis:application:import --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json --json)
+        status=$(echo "$response" | jq '.Status' | xargs)
+        if [ "$status" == "Success" ]
+        then
+          appId=$(echo "$response" | jq '.id' | xargs)
+          echo "::set-env name=LUISAppId::$appId"
+        else
+          exit 1
+        fi
   ```
 
-*luis_ci.yaml* is operating as a Merge pipeline, so the LUIS app is the one associated with the master branch and we use the name specified in the YAML file. The app will be created if it does not already exist. This step determines the AppId (GUID) and saves it in the *AppId* environment variable:
+*luis_ci.yaml* is operating as a Merge workflow, so the LUIS app is the one associated with the master branch and we use the name specified in the YAML file. The app will be created if it does not already exist. This step determines the AppId (GUID) and saves it in the *AppId* environment variable:
 
   ```yml
     # When doing a merge to master, use the master LUIS app - create if necessary (soft fails if exists)
@@ -209,10 +216,18 @@ The *luis_pr.yaml* pipeline is operating as a PR quality gate and it creates a t
         bf luis:application:list --subscriptionKey ${{ env.LUISAuthoringKey }} --endpoint $luisAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "::set-env name=AppId::{}"
-        echo "Found LUIS app: $AppId"
+
+    # Check that we found the master app Id - failure probably indicates misconfiguration
+    - name: Validate application ID
+      run: |
+        echo "LUIS app Id: $LUISAppId"
+        if [ ${#LUISAppId} -ne 36 ]; then
+          echo "ERROR: Failed to find LUIS master app. Check workflow configuration."
+          exit 1
+        fi
   ```
 
-Next, we check if the LUIS app currently has 100 versions (the limit), and if so print a warning and fail the pipeline. In order to resolve this, unneeded versions must be deleted from the LUIS master app.
+Next, we check if the LUIS app currently has 100 versions (the limit), and if so print a warning and fail the workflow. In order to resolve this, unneeded versions must be deleted from the LUIS master app.
 
   ```yml
     - name: Purge LUIS app version
@@ -224,7 +239,7 @@ Next, we check if the LUIS app currently has 100 versions (the limit), and if so
         fi
   ```
 
-Then we go ahead and create a new version in the LUIS app by importing the JSON created earlier. (This step will only do something when the LUIS app is the one targeted by the Merge pipeline):
+Then we go ahead and create a new version in the LUIS app by importing the JSON created earlier. (This step will only do something when the LUIS app is the one targeted by the Merge workflow):
 
   ```yml
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application
@@ -281,15 +296,12 @@ In order to test a LUIS app, you must use an Azure LUIS Prediction resource key.
           xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
 
     - name: Assign LUIS Azure Prediction resource to application
+      shell: pwsh
       run: |
-        curl POST $POSTurl \
-        -H "Authorization: Bearer $(az account get-access-token --query accessToken -o tsv)" \
-        -H "Content-Type: application/json" \
-        -H "Ocp-Apim-Subscription-Key: $LUISAuthoringKey" \
-        --data-ascii "{'AzureSubscriptionId': '$AzureSubscriptionId', 'ResourceGroup': '${{ secrets.AZURE_RESOURCE_GROUP }}', 'AccountName': '${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }}' }"
+          bf luis:application:assignazureaccount --azureSubscriptionId $env:AzureSubscriptionId --appId $env:LUISAppId --accountName $env:luisPredictionResourceName --subscriptionKey $env:LUISAuthoringKey --endpoint $env:LUISAuthoringEndpoint --resourceGroup $env:azureResourceGroup --armToken $(az account get-access-token --query accessToken -o tsv)
       env:
-        POSTurl: ${{ env.LUISAuthoringEndpoint }}luis/authoring/v3.0-preview/apps/${{ env.LUISAppId }}/azureaccounts
-
+        luisPredictionResourceName: ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }}
+        azureResourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
   ```
 
 To test the LUIS app version that was created, we use the unit test file:
@@ -312,7 +324,7 @@ To evaluate results we use two files: the *unit test file* that consists of test
       run: dotnet nlu compare -e $UNIT_TEST_FILE -a results.json --unit-test --output-folder unittest
   ```
 
-We archive the test results as a build pipeline artifact:
+We archive the test results as a build workflow artifact:
 
   ```yml
     - name: Archive Unit Test Results
@@ -322,7 +334,7 @@ We archive the test results as a build pipeline artifact:
         path: unittest/TestResult.xml
   ```
 
-In *luis_pr.yaml* where the pipeline is operating as a PR gate-check, at this point the LUIS app created by this pipeline is deleted:
+In *luis_pr.yaml* where the workflow is operating as a PR gate-check, at this point the LUIS app created by this workflow is deleted:
 
   ```yml
       # Delete the LUIS app again if we are executing as gate check on a PR
@@ -378,21 +390,13 @@ https://<i>azureLUISPredictionResourceName</i>.cognitiveservices.azure.com/luis/
 
 ### Job: LUIS F-measure testing
 
-The quality testing step only executes after the **build** step has succeeded and only in **luis_ci.yaml** which is operating as a Merge pipeline.
+The quality testing step only executes after the **build** step has succeeded and only in **luis_ci.yaml** which is operating as a Merge workflow.
 
-Also note that the `BASELINE_CONTAINER_NAME` GitHub Secret needs to be defined in order to enable comparisons with previous model training runs. This variable should be the name of the Azure blob container which is then used to store the baseline set of test results that we will use to compare our newly built model against. Leaving this GitHub Secret undefined will skip the comparison stage.
+Also note that the `BASELINE_CONTAINER_NAME` environment variable needs to be defined in order to enable comparisons with previous model training runs. This variable should be the name of the Azure blob container which is then used to store the baseline set of test results that we will use to compare our newly built model against. Leaving this environment variable undefined will skip the comparison stage. Read [Configuring the baseline comparison feature](3-customizing-own-project.md#configuring-the-baseline-comparison-feature) to learn more about enabling this feature.
 
-In the LUIS quality testing job in the CI/CD pipeline, we execute the LUIS F-measure tests using the [LUIS batch API](https://docs.microsoft.com/en-us/azure/cognitive-services/LUIS/luis-how-to-batch-test) via NLU.DevOps to calculate the F-measure and to produce the test results file, which contains:
+> **Note:** The **LUIS F-measure testing** job runs concurrently with the *Create LUIS Release* job. It is provided in this template as an example of how to perform automated quality testing of a LUIS app. This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F-measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
 
-* For each Intent and Entity:
-  * Count of true positives for passing tests
-  * Count of true negatives for passing tests
-  * Count of false positives from failing tests
-  * Count of false negatives from failing tests
-
-> **Note:** The **LUIS F-measure testing** job runs concurrently with the *Create LUIS Release* job. It is provided in this template as an example of how to perform automated quality testing of a LUIS app. This kind of testing is best employed when a LUIS app has been developed to the point where its schema is near or fully complete and development has progressed from the early stages of development to the stage of refining the performance of the app. A release manager can review the build artifacts created by this job to monitor the performance of the LUIS app as improvements are made and can use the F measure scores that are output to help decide when to promote new versions of the LUIS app to other build environments such as UAT, Staging or Production.
-
-In the pipeline:
+In the workflow:
   
 * We publish the F-measure for this build as a build artifact and save to blob storage
 * Fetch the test results for the previous build from blob storage
@@ -407,11 +411,11 @@ In the pipeline:
     if: github.event_name == 'push'  
   ```
 
-Many of the steps to setup tools and assign Azure LUIS resources are the same as in the previous step so are not repeated here. This section will describe only the significant steps that carry out the F measure testing.
+Many of the steps to setup tools and assign Azure LUIS resources are the same as in the previous step so are not repeated here. This section will describe only the significant steps that carry out the F-measure testing.
 
 #### Establish the new App Version built by the Build job
 
-The pipeline step executes in its own build environment, so early in this step we must establish what the most recent version of the LUIS app that was created by the build step. The version string is saved in an environment variable named *LuisVersion*.
+The workflow step executes in its own build environment, so early in this step we must establish what the most recent version of the LUIS app that was created by the build step. The version string is saved in an environment variable named *LuisVersion*.
 
   ```yml
     - name: Get master LUIS application ID
@@ -428,7 +432,7 @@ The pipeline step executes in its own build environment, so early in this step w
         xargs -I {} echo "::set-env name=LuisVersion::{}"
   ```
 
-#### Executing F measure testing
+#### Executing F-measure testing
 
 Testing uses the verification test file rather than the unit test file:
 
@@ -444,9 +448,9 @@ Testing uses the verification test file rather than the unit test file:
         luisPredictionResourceName: ${{ env.AzureLuisPredictionResourceName }}
   ```
 
-#### Compare F measure results with baseline
+#### Compare F-measure results with baseline
 
-If you have set the `BASELINE_CONTAINER_NAME` environment variable to the name of a container in Azure Storage then the pipeline will begin storing previous test results.  If results from a previous run exists, then we will download those test results to use as the comparison baseline:
+If you have set the `BASELINE_CONTAINER_NAME` environment variable to the name of a container in Azure Storage then the workflow will begin storing previous test results.  If results from a previous run exists, then we will download those test results to use as the comparison baseline:
 
   ```yml
     - name: download baseline
@@ -476,7 +480,7 @@ If no previous baseline is configured, then we just generate a new set of result
       run: dotnet nlu compare -e $QUALITY_TEST_FILE -a F-results.json
   ```
 
-Finally, we upload the F measure results as a build artifact and also to Azure Storage:
+Finally, we upload the F-measure results as a build artifact and also to Azure Storage:
 
   ```yml
     - name: Archive Quality Test Results
@@ -497,9 +501,9 @@ Finally, we upload the F measure results as a build artifact and also to Azure S
 
 ### Job: Create LUIS Release
 
-This step only executes if the *build* step has completed successfully and only within **luis_ci.yaml** which is operating as a Merge pipeline to master.
+This step only executes if the *build* step has completed successfully and only within **luis_ci.yaml** which is operating as a Merge workflow to master.
 
-> **Note:** The **Create LUIS Release** job is a simple example of a CD (Continuous Delivery) pipeline. In  enterprise development, release procedures and practices differ from one project to another, so the implementation of this job in the pipeline is supplied in this template as an example that should be customized as required. 
+> **Note:** The **Create LUIS Release** job is a simple example of a CD (Continuous Delivery) workflow. In  enterprise development, release procedures and practices differ from one project to another, so the implementation of this job in the workflow is supplied in this template as an example that should be customized as required.
 
   ```yml
   # Job: Continuous deployment job for LUIS
@@ -545,6 +549,6 @@ See the following documents for more information on this template and the engine
 
 * [Project Setup and configuration](1-project-setup.md)
 
-* [Creating a Feature branch, updating your LUIS app, and executing the CI/CD pipelines](2-feature-branches-and-running-pipelines.md)
+* [Creating a Feature branch, updating your LUIS app, and executing the CI/CD workflows](2-feature-branches-and-running-pipelines.md)
 
 * [Adapting this repository to your own project](3-customizing-own-project.md#starting-a-new-project-from-scratch)

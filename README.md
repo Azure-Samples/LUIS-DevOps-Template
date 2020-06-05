@@ -7,7 +7,7 @@ products:
 - azure-cognitive-services
 description: |
   DevOps practices for LUIS app development
-urlFragment: luis-devops-sample
+urlFragment: luis-devops-template
 ---
 
 # Developing a LUIS app using DevOps practices
@@ -58,7 +58,7 @@ You can find out more about LUIS in the [Language Understanding (LUIS) documenta
 
 ## How to use this template repository
 
-Follow these steps to run this workflow in your personal GitHub repository:
+Follow these steps to setup your own copy of this repository in your personal GitHub account:
 
 1. Follow the [Project setup instructions](./docs/1-project-setup.md) to clone this template repository to your own GitHub account and to configure it for use.
 2. Follow the [Making updates to a LUIS app in a feature branch](./docs/2-feature-branches-and-running-pipelines.md) tutorial to understand the "dev inner loop" workflow for making updates to the LUIS app while using DevOps practices.
