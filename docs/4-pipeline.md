@@ -153,7 +153,7 @@ We log into Azure using the `AZURE_CREDENTIALS` token saved into GitHub secrets 
 
     - name: Get LUIS authoring endpoint
       run: |
-          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "endpoint" | \
+          az cognitiveservices account show --name $AzureLuisAuthoringResourceName --resource-group $AzureResourceGroup --query "properties.endpoint" | \
           xargs -I {} echo "::set-env name=luisAuthoringEndpoint::{}"
 ```
 
