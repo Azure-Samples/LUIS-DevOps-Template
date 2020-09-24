@@ -78,7 +78,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.1
+      run: npm i -g @microsoft/botframework-cli@4.10.0
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -241,7 +241,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.1
+      run: npm i -g @microsoft/botframework-cli@4.10.0
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -324,7 +324,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.1
+      run: npm i -g @microsoft/botframework-cli@4.10.0
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
