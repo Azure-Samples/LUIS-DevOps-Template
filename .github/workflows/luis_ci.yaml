@@ -78,7 +78,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.1
+      run: npm i -g @microsoft/botframework-cli@4.10.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -115,7 +115,7 @@ jobs:
 
     # When doing a CI/CD run on push to master, we create a new version in an existing LUIS application 
     - name: Create new LUIS application version
-      run: bf luis:version:import --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json
+      run: bf luis:version:import --appId $LUISAppId --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --in model.json
 
     - name: Train luis
       run: bf luis:train:run --appId $LUISAppId --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
@@ -241,7 +241,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.1
+      run: npm i -g @microsoft/botframework-cli@4.10.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
@@ -324,7 +324,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.9.1
+      run: npm i -g @microsoft/botframework-cli@4.10.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "::set-env name=BF_CLI_TELEMETRY::true"
