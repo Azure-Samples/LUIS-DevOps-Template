@@ -86,13 +86,22 @@ jobs:
     - name: Ludown to LUIS model
       run: bf luis:convert -i $LU_FILE -o ./model.json --name 'LUIS CI pipeline - ${{ github.run_id }}' --versionid $LUISAppVersion
 
-    # When doing a merge to master, use the master LUIS app - create if necessary (soft fails if exists)
+    # When doing a merge to master, use the master LUIS app
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint --versionId=0.1
         bf luis:application:list --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "LUISAppId={}" >> $GITHUB_ENV
+
+    # create application if necessary
+    - name: Create application if doesn't exist
+      run: |
+        if [ ${#LUISAppId} -ne 36 ]; then
+          bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint --versionId=0.1
+          bf luis:application:list --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint | \
+          jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
+          xargs -I {} echo "LUISAppId={}" >> $GITHUB_ENV
+        fi
 
     # Check that we found the master app Id - failure probably indicates misconfiguration
     - name: Validate application ID
