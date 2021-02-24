@@ -41,16 +41,16 @@ jobs:
         git config remote.origin.url https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git fetch --prune --unshallow
 
-    - name: Install GitVersion v0.9.3
-      uses: gittools/actions/gitversion/setup@6dfe406
+    - name: Install GitVersion v0.9.9
+      uses: gittools/actions/gitversion/setup@v0.9.9
       with:
-        versionSpec: '5.2.x'
-    - name: Use GitVersion v0.9.3
+        versionSpec: '5.6.6'
+    - name: Use GitVersion v0.9.9
       id: gitversion
-      uses: gittools/actions/gitversion/execute@6dfe406
+      uses: gittools/actions/gitversion/execute@v0.9.9
 
     - name: LUISAppVersion env
-      run: echo "::set-env name=LUISAppVersion::$GitVersion_SemVer"
+      run: echo "LUISAppVersion=$GitVersion_SemVer" >> $GITHUB_ENV
 
     - uses: azure/login@v1
       with:
@@ -59,29 +59,29 @@ jobs:
     - name: Get LUIS authoring key
       run: |
         keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-        echo "::set-env name=LUISAuthoringKey::$keya"
+        echo "LUISAuthoringKey=$keya" >> $GITHUB_ENV
         echo "::add-mask::$keya"
 
     - name: Get LUIS prediction key
       run: |
         keyp=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-        echo "::set-env name=LUISPredictionKey::$keyp"
+        echo "LUISPredictionKey=$keyp" >> $GITHUB_ENV
         echo "::add-mask::$keyp"
 
     - name: Get LUIS authoring endpoint
       run: |
         az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "properties.endpoint" | \
-        xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
+        xargs -I {} echo "LUISAuthoringEndpoint={}" >> $GITHUB_ENV
 
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.10.1
+      run: npm i -g @microsoft/botframework-cli@4.11.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
-      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
+      run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
 
     - name: Ludown to LUIS model
       run: bf luis:convert -i $LU_FILE -o ./model.json --name 'LUIS CI pipeline - ${{ github.run_id }}' --versionid $LUISAppVersion
@@ -92,7 +92,7 @@ jobs:
         bf luis:application:create --name $LUIS_MASTER_APP_NAME --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint --versionId=0.1
         bf luis:application:list --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
-        xargs -I {} echo "::set-env name=LUISAppId::{}"
+        xargs -I {} echo "LUISAppId={}" >> $GITHUB_ENV
 
     # Check that we found the master app Id - failure probably indicates misconfiguration
     - name: Validate application ID
@@ -143,12 +143,12 @@ jobs:
       run: dotnet tool install -g dotnet-nlu --version 0.7.5
 
     - name: Add dotnet Tools to Path
-      run: echo "::add-path::$HOME/.dotnet/tools"
+      run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Get Azure subscriptionId
       run: |
         az account show --query 'id' | \
-        xargs -I {} echo "::set-env name=AzureSubscriptionId::{}"
+        xargs -I {} echo "AzureSubscriptionId={}" >> $GITHUB_ENV
 
     - name: Assign LUIS Azure Prediction resource to application
       shell: pwsh
@@ -222,48 +222,48 @@ jobs:
     - name: Get LUIS authoring key
       run: |
         keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-        echo "::set-env name=LUISAuthoringKey::$keya"
+        echo "LUISAuthoringKey=$keya" >> $GITHUB_ENV
         echo "::add-mask::$keya"
 
     - name: Get LUIS prediction key
       run: |
         keyp=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_PREDICTION_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-        echo "::set-env name=LUISPredictionKey::$keyp"
+        echo "LUISPredictionKey=$keyp" >> $GITHUB_ENV
         echo "::add-mask::$keyp"
 
     - name: Get LUIS authoring endpoint
       run: |
         az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "properties.endpoint" | \
-        xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
+        xargs -I {} echo "LUISAuthoringEndpoint={}" >> $GITHUB_ENV
 
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.10.1
+      run: npm i -g @microsoft/botframework-cli@4.11.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
-      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
+      run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
 
     - name: Get master LUIS application ID
       run: |
         bf luis:application:list --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
-        xargs -I {} echo "::set-env name=LUISAppId::{}"
+        xargs -I {} echo "LUISAppId={}" >> $GITHUB_ENV
         echo "Found LUIS app: $LUISAppId"
 
     - name: Get LUIS latest version ID
       run: |
         bf luis:version:list --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey  --take 1 | \
         jq '.[0].version' | \
-        xargs -I {} echo "::set-env name=LUISAppVersion::{}"
+        xargs -I {} echo "LUISAppVersion={}" >> $GITHUB_ENV
 
     - name: Install dotnet-nlu
-      run: dotnet tool install -g dotnet-nlu --version 0.7.5
+      run: dotnet tool install -g dotnet-nlu --version 0.8.0
 
     - name: Add dotnet Tools to Path
-      run: echo "::add-path::$HOME/.dotnet/tools"
+      run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Test Luis model with quality verification tests
       run: dotnet nlu test -s luisV3 -u $QUALITY_TEST_FILE -o F-results.json
@@ -324,34 +324,34 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.10.1
+      run: npm i -g @microsoft/botframework-cli@4.11.1
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
-      run: echo "::set-env name=BF_CLI_TELEMETRY::true"
+      run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
 
     - name: Get LUIS authoring key
       run: |
         keya=$(az cognitiveservices account keys list --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "key1" | xargs)
-        echo "::set-env name=LUISAuthoringKey::$keya"
+        echo "LUISAuthoringKey=$keya" >> $GITHUB_ENV
         echo "::add-mask::$keya"
 
     - name: Get LUIS authoring endpoint
       run: |
         az cognitiveservices account show --name ${{ secrets.AZURE_LUIS_AUTHORING_RESOURCE_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "properties.endpoint" | \
-        xargs -I {} echo "::set-env name=LUISAuthoringEndpoint::{}"
+        xargs -I {} echo "LUISAuthoringEndpoint={}" >> $GITHUB_ENV
 
     - name: Get master LUIS application ID
       run: |
         bf luis:application:list --subscriptionKey $LUISAuthoringKey --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
-        xargs -I {} echo "::set-env name=LUISAppId::{}"
+        xargs -I {} echo "LUISAppId={}" >> $GITHUB_ENV
         echo "Found LUIS app: $LUISAppId"
 
     - name: Get LUIS latest version ID
       run: |
         bf luis:version:list --appId $LUISAppId --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey --take 1 --out luis_latest_version.json
         cat luis_latest_version.json | jq '.[0].version' | \
-        xargs -I {} echo "::set-env name=LUISAppVersion::{}"
+        xargs -I {} echo "LUISAppVersion={}" >> $GITHUB_ENV
 
     - name: Publish LUIS to PRODUCTION
       run: bf luis:application:publish --appId $LUISAppId --versionId $LUISAppVersion --endpoint $LUISAuthoringEndpoint --subscriptionKey $LUISAuthoringKey
