@@ -20,6 +20,9 @@ env:
   # Set the path to the file for your unit tests
   UNIT_TEST_FILE: luis-app/tests/unittests.json
 
+  # Software Versions
+  BOTFRAMEWORK_VERSION: 4.15.0
+
 jobs:
   build:
     name: Build and Test LUIS model (PR)
@@ -54,7 +57,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.11.1
+      run: npm i -g @microsoft/botframework-cli@${{ env.BOTFRAMEWORK_VERSION }}
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
