@@ -10,10 +10,6 @@ on:
     paths:
       - 'luis-app/*.lu'
       - 'luis-app/tests/*.json'
-  pull_request:
-    paths:
-      - 'luis-app/*.lu'
-      - 'luis-app/tests/*.json'
 
 env:
   # Set the name of the master LUIS app
