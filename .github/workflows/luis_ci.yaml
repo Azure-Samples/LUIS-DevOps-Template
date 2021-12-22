@@ -24,6 +24,10 @@ env:
   # Set the path to the file for your unit tests
   QUALITY_TEST_FILE: luis-app/tests/verificationtests.json
 
+  # Software Versions
+  BOTFRAMEWORK_VERSION: 4.15.0
+  AZURE_CLI_VERSION: 2.31.0
+
 jobs:
   build:
     name: LUIS Build and Test
@@ -78,7 +82,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.11.1
+      run: npm i -g @microsoft/botframework-cli@${{ env.BOTFRAMEWORK_VERSION }}
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
@@ -250,14 +254,14 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.11.1
+      run: npm i -g @microsoft/botframework-cli@${{ env.BOTFRAMEWORK_VERSION }}
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
 
     - name: Get master LUIS application ID
       run: |
-        bf luis:application:list --subscriptionKey $LUISAuthoringKey  --endpoint $LUISAuthoringEndpoint | \
+        bf luis:application:list --subscriptionKey $LUISAuthoringKey --endpoint $LUISAuthoringEndpoint | \
         jq -c '.[] | select(.name | . and contains('\"$LUIS_MASTER_APP_NAME\"')) | .id' | \
         xargs -I {} echo "LUISAppId={}" >> $GITHUB_ENV
         echo "Found LUIS app: $LUISAppId"
@@ -287,7 +291,7 @@ jobs:
       if: env.BASELINE_CONTAINER_NAME != ''
       uses: azure/CLI@v1
       with:
-        azcliversion: 2.2.0
+        azcliversion: ${{ env.AZURE_CLI_VERSION }}
         inlineScript: |
           az storage blob download  --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} --container-name ${{  env.BASELINE_CONTAINER_NAME  }}  --name statistics.json  --file baselinefile.json --auth-mode login
 
@@ -310,7 +314,7 @@ jobs:
     - name: upload statistics
       uses: azure/CLI@v1
       with:
-        azcliversion: 2.2.0
+        azcliversion: ${{ env.AZURE_CLI_VERSION }}
         inlineScript: |
           az storage container create  --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}  --name ${{ github.sha }}  --auth-mode login
           az storage blob upload  --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}  --container-name ${{ github.sha }} --name statistics.json --file statistics.json  --auth-mode login
@@ -333,7 +337,7 @@ jobs:
         node-version: '12.x'
 
     - name: Install @microsoft/botframework-cli
-      run: npm i -g @microsoft/botframework-cli@4.11.1
+      run: npm i -g @microsoft/botframework-cli@${{ env.BOTFRAMEWORK_VERSION }}
 
     - name: Bypass botframework-cli telemetry prompts, enable telemetry collection - set to false to disable telemetry collection
       run: echo "BF_CLI_TELEMETRY=true" >> $GITHUB_ENV
